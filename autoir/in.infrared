@@ -1,0 +1,50 @@
+# ----------------- Init Section -----------------
+units real
+atom_style full
+
+dimension 3
+boundary p p p
+
+bond_style hybrid harmonic
+angle_style hybrid harmonic
+special_bonds lj 0.0 0.0 0.5 coul 0.0 0.0 0.8333333333
+pair_style lj/cut/coul/long 9.0 9.0
+pair_modify mix arithmetic tail yes
+
+read_data interchange.lmp
+
+# thermo_style custom ebond eangle edihed eimp epair evdwl ecoul elong etail pe
+
+kspace_style pppm 1e-4
+
+timestep        0.5
+thermo          200
+
+variable T equal 300
+variable P equal 1
+
+
+# ----------------- Setup Dipoles -----------------
+compute         1 all property/atom q xu yu zu
+variable        dipolex atom c_1[1]*c_1[2]
+variable        dipoley atom c_1[1]*c_1[3]
+variable        dipolez atom c_1[1]*c_1[4]
+compute         2 all reduce sum v_dipolex
+compute         3 all reduce sum v_dipoley
+compute         4 all reduce sum v_dipolez
+variable        totaldipolex equal c_2
+variable        totaldipoley equal c_3
+variable        totaldipolez equal c_4
+variable        mytime equal step*dt
+
+# ----------------- Run Section -----------------
+# Equilibration
+velocity        all create ${T} 38564
+fix             1 all npt temp ${T} ${T} 100.0 iso ${P} ${P} 500.0
+run             50000
+
+fix             printdipole all ave/time 1 1 2 v_mytime v_totaldipolex v_totaldipoley v_totaldipolez file dipole.txt mode scalar format " %.10f"
+dump            my_dump all atom 1000 dump.lammpstrj
+
+# Production run
+run             100000
