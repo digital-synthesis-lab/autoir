@@ -1,4 +1,4 @@
-import matplotlib.pyplot as plt
+import pandas as pd
 import numpy as np
 from scipy import fftpack, signal
 
@@ -62,13 +62,5 @@ def process_file(inp_file: str = "dipoles.csv", out_file: str = "ir.csv"):
     autocorr, timestep = compute_autocorr(inp_file)
     wavenums, spectra = compute_spectra(autocorr, timestep)
 
-    np.savetxt(
-        out_file,
-        np.column_stack([wavenums, spectra]),
-        header="w,IR",
-        delimiter=",",
-    )
-
-
-if __name__ == "__main__":
-    process()
+    df = pd.DataFrame({"w": wavenums, "IR": spectra})
+    df.to_csv(out_file)
