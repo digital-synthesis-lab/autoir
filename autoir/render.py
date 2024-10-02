@@ -10,16 +10,13 @@ def render_input_file(params: Dict[str, Any]) -> str:
     :param params: Dictionary containing job parameters
     :return: Rendered input file content as a string
     """
-    # Determine which template to use based on the ensemble
-    template_name = "npt.in" if params.get("pressure") is not None else "nvt.in"
-
     # Set up Jinja2 environment
     current_dir = os.path.dirname(os.path.abspath(__file__))
     template_dir = os.path.join(current_dir, "lammps")
     env = Environment(loader=FileSystemLoader(template_dir))
 
     # Load the template
-    template = env.get_template(template_name)
+    template = env.get_template("simulation.in")
 
     # Render the template with the provided parameters
     rendered_content = template.render(job=params)
@@ -42,17 +39,30 @@ def write_input_file(params: Dict[str, Any], output_path: str) -> None:
 
 # Example usage:
 if __name__ == "__main__":
-    # Example parameters
-    params = {
+    # Example parameters for NPT ensemble
+    npt_params = {
         "temperature": 300,
-        "pressure": 1.0,  # Remove this line for NVT ensemble
+        "pressure": 1.0,
         "seed": 12345,
         "equi_steps": 10000,
         "prod_steps": 100000,
     }
 
-    # Render and print the content
-    print(render_input_file(params))
+    # Example parameters for NVT ensemble
+    nvt_params = {
+        "temperature": 300,
+        "seed": 12345,
+        "equi_steps": 10000,
+        "prod_steps": 100000,
+    }
 
-    # Optionally, write to a file
-    # write_input_file(params, "output.in")
+    # Render and print the content for NPT
+    print("NPT Ensemble:")
+    print(render_input_file(npt_params))
+
+    print("\nNVT Ensemble:")
+    print(render_input_file(nvt_params))
+
+    # Optionally, write to files
+    # write_input_file(npt_params, "npt_output.in")
+    # write_input_file(nvt_params, "nvt_output.in")
