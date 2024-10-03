@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "autoir"
+version = "2024.10.02"
+description = "AutoIR"
+authors = [{name = "Daniel Schwalbe-Koda", email = "dskoda@ucla.edu"}]
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.8"
+keywords = ["feed", "reader", "tutorial"]
+dependencies = [
+    "numpy",
+    "pandas",
+    "click",
+    "jinja2",
+    "scipy",
+]
+
+[project.scripts]
+autoir = "autoir.cli.autoir:autoir"
+
+[tool.setuptools]
+packages = ["autoir"]
