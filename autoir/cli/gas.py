@@ -9,8 +9,8 @@ from autoir.render import render_input_file, write_input_file
 @click.argument("smiles")
 @click.option("--temperature", default=300, help="Simulation temperature in K")
 @click.option("--seed", default=12345, help="Random seed for the simulation")
-@click.option("--equi_steps", default=10000, help="Number of equilibration steps")
-@click.option("--prod_steps", default=100000, help="Number of production steps")
+@click.option("--equi_steps", default=50000, help="Number of equilibration steps")
+@click.option("--prod_steps", default=500000, help="Number of production steps")
 def gas_sim(smiles, temperature, seed, equi_steps, prod_steps):
     """Run a gas phase simulation for the given SMILES string."""
     sim_id = str(uuid.uuid4())
@@ -32,6 +32,6 @@ def gas_sim(smiles, temperature, seed, equi_steps, prod_steps):
     }
 
     # Render and write the main input file
-    write_input_file(params, "simulation.in")
+    write_input_file(params, "gas.in")
 
     click.echo(f"Gas phase simulation files created in directory: {sim_dir}")
