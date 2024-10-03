@@ -29,6 +29,7 @@ def gas_sim(smiles, temperature, seed, equi_steps, prod_steps):
         "seed": seed,
         "equi_steps": equi_steps,
         "prod_steps": prod_steps,
+        "dump_freq": None,
     }
 
     # Render and write the main input file
