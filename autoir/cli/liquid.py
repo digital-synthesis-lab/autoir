@@ -26,14 +26,20 @@ def liquid_sim(smiles, temperature, pressure, seed, equi_steps, prod_steps):
 
     # Prepare parameters for the main input file
     params = {
+        "smiles": smiles,
         "temperature": temperature,
         "pressure": pressure,
         "seed": seed,
         "equi_steps": equi_steps,
         "prod_steps": prod_steps,
+        "dump_freq": None,
+        "phase": "liquid",
     }
 
     # Render and write the main input file
     write_input_file(params, "liquid.in")
+
+    with open("job.json", "w") as f:
+        json.dump(params, f)
 
     click.echo(f"Liquid phase simulation files created in directory: {sim_dir}")

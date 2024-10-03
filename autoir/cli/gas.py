@@ -1,3 +1,4 @@
+import json
 import click
 import uuid
 import os
@@ -25,14 +26,19 @@ def gas_sim(smiles, temperature, seed, equi_steps, prod_steps):
 
     # Prepare parameters for the main input file
     params = {
+        "smiles": smiles,
         "temperature": temperature,
         "seed": seed,
         "equi_steps": equi_steps,
         "prod_steps": prod_steps,
         "dump_freq": None,
+        "phase": "gas",
     }
 
     # Render and write the main input file
     write_input_file(params, "gas.in")
+
+    with open("job.json", "w") as f:
+        json.dump(params, f)
 
     click.echo(f"Gas phase simulation files created in directory: {sim_dir}")
