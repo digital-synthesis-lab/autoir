@@ -20,7 +20,7 @@ def topology_gas(mol: Molecule):
     return topology
 
 
-def topology_single_liquid(mol: Molecule, copies: int = 500, box_size: float = 3.5):
+def topology_single_liquid(mol: Molecule, copies: int = 200, box_size: float = 2.6):
     topology = pack_box(
         molecules=[mol],
         number_of_copies=[copies],
@@ -45,7 +45,15 @@ def gas_simulation(smiles):
 
 def liq_simulation(smiles):
     mol = Molecule.from_smiles(smiles)
-    topology = topology_single_liquid(mol)
+
+    # estimates the size of the box given the number of heavy atoms
+    heavy_atoms = [
+        at for at in mol.atoms
+        if at.atomic_number > 1
+    ]
+    box_size = 2.7 * len(heavy_atoms) / 3
+
+    topology = topology_single_liquid(mol, box_size=box_size)
     ff = ForceField(DEFAULT_FF)
     interchange: Interchange = Interchange.from_smirnoff(
         force_field=ff, topology=topology
