@@ -20,7 +20,7 @@ dependencies = [
 ]
 
 [project.scripts]
-autoir = "autoir.cli.autoir:autoir"
+autoir = "autoir.cli.main:autoir"
 
 [tool.setuptools]
 packages = ["autoir"]
