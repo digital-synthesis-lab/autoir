@@ -163,3 +163,4 @@ cython_debug/
 
 examples/
 .aider*
+tests/
