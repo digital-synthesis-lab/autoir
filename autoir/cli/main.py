@@ -1,7 +1,7 @@
 import click
 
 from autoir.cli.gas import gas_sim
-from autoir.cli.liquid_sim import liquid_sim
+from autoir.cli.liquid import liquid_sim
 
 
 class AutoIRGroup(click.Group):

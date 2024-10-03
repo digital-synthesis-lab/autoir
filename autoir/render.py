@@ -10,15 +10,13 @@ def render_input_file(params: Dict[str, Any]) -> str:
     :param params: Dictionary containing job parameters
     :return: Rendered input file content as a string
     """
-    # Set up Jinja2 environment
     current_dir = os.path.dirname(os.path.abspath(__file__))
     template_dir = os.path.join(current_dir, "lammps")
     env = Environment(loader=FileSystemLoader(template_dir))
 
-    # Load the template
+    params["pressure"] = None
     template = env.get_template("template.in")
 
-    # Render the template with the provided parameters
     rendered_content = template.render(job=params)
 
     return rendered_content

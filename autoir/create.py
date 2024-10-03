@@ -31,7 +31,8 @@ def topology_single_liquid(mol: Molecule, copies: int = 500, box_size: float = 3
 
 
 def gas_simulation(smiles):
-    topology = topology_gas(smiles)
+    mol = Molecule.from_smiles(smiles)
+    topology = topology_gas(mol)
     ff = ForceField(DEFAULT_FF)
     interchange: Interchange = Interchange.from_smirnoff(
         force_field=ff, topology=topology
@@ -43,7 +44,8 @@ def gas_simulation(smiles):
 
 
 def liq_simulation(smiles):
-    topology = topology_single_liquid(smiles)
+    mol = Molecule.from_smiles(smiles)
+    topology = topology_single_liquid(mol)
     ff = ForceField(DEFAULT_FF)
     interchange: Interchange = Interchange.from_smirnoff(
         force_field=ff, topology=topology
