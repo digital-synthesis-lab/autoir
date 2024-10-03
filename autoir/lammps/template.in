@@ -25,5 +25,8 @@ run             {{ job.equi_steps }}
 fix             p1 all print ${sFreq} "${tt},${mu_x},${mu_y},${mu_z}" screen no file dipoles.csv
 
 # Production run
-dump d1 all atom 1000 dump.lammpstrj
+{% if job.dump_freq is not none %}
+dump d1 all atom {{ job.dump_freq }} dump.lammpstrj
+{% endif %}
+
 run             {{ job.prod_steps }}

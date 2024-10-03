@@ -16,7 +16,7 @@ def render_input_file(params: Dict[str, Any]) -> str:
     env = Environment(loader=FileSystemLoader(template_dir))
 
     # Load the template
-    template = env.get_template("simulation.in")
+    template = env.get_template("template.in")
 
     # Render the template with the provided parameters
     rendered_content = template.render(job=params)
@@ -37,7 +37,6 @@ def write_input_file(params: Dict[str, Any], output_path: str) -> None:
         f.write(rendered_content)
 
 
-# Example usage:
 if __name__ == "__main__":
     # Example parameters for NPT ensemble
     npt_params = {
