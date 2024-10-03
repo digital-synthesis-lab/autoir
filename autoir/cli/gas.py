@@ -28,6 +28,7 @@ def gas_sim(smiles, temperature, seed, equi_steps, prod_steps):
     params = {
         "smiles": smiles,
         "temperature": temperature,
+        "pressure": None,
         "seed": seed,
         "equi_steps": equi_steps,
         "prod_steps": prod_steps,
