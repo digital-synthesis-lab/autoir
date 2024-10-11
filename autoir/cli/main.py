@@ -2,6 +2,7 @@ import click
 
 from autoir.cli.gas import gas_sim
 from autoir.cli.liquid import liquid_sim
+from autoir.cli.mixture import mixture_sim
 from autoir.cli.analyze import analyze_file
 
 
@@ -17,3 +18,4 @@ def autoir():
 autoir.add_command(gas_sim)
 autoir.add_command(liquid_sim)
 autoir.add_command(analyze_file)
+autoir.add_command(mixture_file)
