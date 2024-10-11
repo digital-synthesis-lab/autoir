@@ -16,7 +16,7 @@ from autoir.render import render_input_file, write_input_file
 @click.option("--equi_steps", default=50000, help="Number of equilibration steps")
 @click.option("--prod_steps", default=300000, help="Number of production steps")
 def mixture_sim(
-    smiles1, smiles2, ratio, temperature, pressure, seed, equi_steps, prod_steps
+    smiles_1, smiles_2, ratio, temperature, pressure, seed, equi_steps, prod_steps
 ):
     """Run a liquid phase simulation for the given SMILES string."""
     sim_id = str(uuid.uuid4())
@@ -27,13 +27,13 @@ def mixture_sim(
     os.chdir(sim_dir)
 
     # Generate LAMMPS data file and header
-    mix_simulation(smiles1, smiles2, ratio)
+    mix_simulation(smiles_1, smiles_2, ratio)
 
     # Prepare parameters for the main input file
     params = {
         "id": sim_id,
-        "smiles1": smiles1,
-        "smiles2": smiles2,
+        "smiles_1": smiles_1,
+        "smiles_2": smiles_2,
         "ratio": ratio,
         "temperature": temperature,
         "pressure": pressure,
