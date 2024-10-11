@@ -17,5 +17,5 @@ def autoir():
 
 autoir.add_command(gas_sim)
 autoir.add_command(liquid_sim)
+autoir.add_command(mixture_sim)
 autoir.add_command(analyze_file)
-autoir.add_command(mixture_file)
