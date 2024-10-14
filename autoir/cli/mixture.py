@@ -2,13 +2,14 @@ import json
 import click
 import uuid
 import os
-from autoir.create import mix_simulation
+from autoir.create import mix_simulation, DEFAULT_NUM_MOLS
 from autoir.render import render_input_file, write_input_file
 
 
 @click.command("mixture")
 @click.argument("smiles_1")
 @click.argument("smiles_2")
+@click.option("-n", "--n_mols", default=DEFAULT_NUM_MOLS, help="Number of molecules inside the box")
 @click.option("--ratio", default=0.5, help="Ratio between 1 and 2")
 @click.option("--temperature", default=300, help="Simulation temperature in K")
 @click.option("--pressure", default=1.0, help="Simulation pressure in atm")
@@ -16,7 +17,7 @@ from autoir.render import render_input_file, write_input_file
 @click.option("--equi_steps", default=50000, help="Number of equilibration steps")
 @click.option("--prod_steps", default=300000, help="Number of production steps")
 def mixture_sim(
-    smiles_1, smiles_2, ratio, temperature, pressure, seed, equi_steps, prod_steps
+    smiles_1, smiles_2, n_mols, ratio, temperature, pressure, seed, equi_steps, prod_steps
 ):
     """Run a liquid phase simulation for the given SMILES string."""
     sim_id = str(uuid.uuid4())
@@ -27,13 +28,14 @@ def mixture_sim(
     os.chdir(sim_dir)
 
     # Generate LAMMPS data file and header
-    mix_simulation(smiles_1, smiles_2, ratio)
+    mix_simulation(smiles_1, smiles_2, ratio=ratio, n_mols=n_mols)
 
     # Prepare parameters for the main input file
     params = {
         "id": sim_id,
         "smiles_1": smiles_1,
         "smiles_2": smiles_2,
+        "n_mols": n_mols,
         "ratio": ratio,
         "temperature": temperature,
         "pressure": pressure,
