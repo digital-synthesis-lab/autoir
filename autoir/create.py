@@ -16,7 +16,7 @@ DEFAULT_NUM_MOLS = 200
 
 
 def estimate_box_size(mol: Molecule, n_mols: int = DEFAULT_NUM_MOLS):
-    fraction = (n_mols / 200) ** 3
+    fraction = (n_mols / 200) ** (1 / 3)
     heavy_atoms = [at for at in mol.atoms if at.atomic_number > 1]
     return 2.7 * fraction * len(heavy_atoms) / 3
 
@@ -31,7 +31,7 @@ def topology_gas(mol: Molecule):
 def topology_single_liquid(mol: Molecule, n_mols: int = DEFAULT_NUM_MOLS, box_size: float = 2.6):
     topology = pack_box(
         molecules=[mol],
-        number_of_n_mols=[n_mols],
+        number_of_copies=[n_mols],
         box_vectors=box_size * UNIT_CUBE * unit.nanometer,
     )
 
@@ -47,7 +47,7 @@ def topology_binary(
 ):
     topology = pack_box(
         molecules=[mol1, mol2],
-        number_of_n_mols=[round(n_mols * ratio), round(n_mols * (1 - ratio))],
+        number_of_copies=[round(n_mols * ratio), round(n_mols * (1 - ratio))],
         box_vectors=box_size * UNIT_CUBE * unit.nanometer,
     )
 
@@ -67,7 +67,7 @@ def gas_simulation(smiles):
     mdconfig.write_lammps_input(input_file="header.in", interchange=interchange)
 
 
-def liq_simulation(smiles, NUM_MOLS: int = DEFAULT_NUM_MOLS):
+def liq_simulation(smiles, n_mols: int = DEFAULT_NUM_MOLS):
     mol = Molecule.from_smiles(smiles)
 
     box_size = estimate_box_size(mol, n_mols=n_mols)
