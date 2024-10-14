@@ -9,6 +9,7 @@ from autoir.render import render_input_file, write_input_file
 @click.command("mixture")
 @click.argument("smiles_1")
 @click.argument("smiles_2")
+@click.option("-o", "--output", default=None, help="Output directory")
 @click.option("-n", "--n_mols", default=DEFAULT_NUM_MOLS, help="Number of molecules inside the box")
 @click.option("--ratio", default=0.5, help="Ratio between 1 and 2")
 @click.option("--temperature", default=300, help="Simulation temperature in K")
@@ -17,12 +18,15 @@ from autoir.render import render_input_file, write_input_file
 @click.option("--equi_steps", default=50000, help="Number of equilibration steps")
 @click.option("--prod_steps", default=300000, help="Number of production steps")
 def mixture_sim(
-    smiles_1, smiles_2, n_mols, ratio, temperature, pressure, seed, equi_steps, prod_steps
+    smiles_1, smiles_2, output, n_mols, ratio, temperature, pressure, seed, equi_steps, prod_steps
 ):
-    """Run a liquid phase simulation for the given SMILES string."""
+    """Run a liquid phase simulation of a binary molecular mixture for the given SMILES strings."""
     sim_id = str(uuid.uuid4())
-    sim_dir = os.path.join(os.getcwd(), sim_id)
-    os.makedirs(sim_dir, exist_ok=True)
+
+    if output is not None:
+        sim_dir = output
+    else: 
+        sim_dir = os.path.join(os.getcwd(), sim_id)
 
     # Change to the simulation directory
     os.chdir(sim_dir)
