@@ -12,11 +12,13 @@ from openff.interchange.components._packmol import (
 
 DEFAULT_FF = "openff_unconstrained-2.0.0.offxml"
 DEFAULT_BOX_SIZE = 4.0  # nm for gas phase
+DEFAULT_NUM_MOLS = 200
 
 
-def estimate_box_size(mol: Molecule):
+def estimate_box_size(mol: Molecule, n_mols: int = DEFAULT_NUM_MOLS):
+    fraction = (n_mols / 200) ** 3
     heavy_atoms = [at for at in mol.atoms if at.atomic_number > 1]
-    return 2.7 * len(heavy_atoms) / 3
+    return 2.7 * fraction * len(heavy_atoms) / 3
 
 
 def topology_gas(mol: Molecule):
@@ -26,10 +28,10 @@ def topology_gas(mol: Molecule):
     return topology
 
 
-def topology_single_liquid(mol: Molecule, copies: int = 200, box_size: float = 2.6):
+def topology_single_liquid(mol: Molecule, n_mols: int = DEFAULT_NUM_MOLS, box_size: float = 2.6):
     topology = pack_box(
         molecules=[mol],
-        number_of_copies=[copies],
+        number_of_n_mols=[n_mols],
         box_vectors=box_size * UNIT_CUBE * unit.nanometer,
     )
 
@@ -40,12 +42,12 @@ def topology_binary(
     mol1: Molecule,
     mol2: Molecule,
     ratio: float = 0.5,
-    copies: List[int] = 200,
+    n_mols: List[int] = 200,
     box_size: float = 2.6,
 ):
     topology = pack_box(
         molecules=[mol1, mol2],
-        number_of_copies=[round(copies * ratio), round(copies * (1 - ratio))],
+        number_of_n_mols=[round(n_mols * ratio), round(n_mols * (1 - ratio))],
         box_vectors=box_size * UNIT_CUBE * unit.nanometer,
     )
 
@@ -65,12 +67,12 @@ def gas_simulation(smiles):
     mdconfig.write_lammps_input(input_file="header.in", interchange=interchange)
 
 
-def liq_simulation(smiles):
+def liq_simulation(smiles, NUM_MOLS: int = DEFAULT_NUM_MOLS):
     mol = Molecule.from_smiles(smiles)
 
-    box_size = estimate_box_size(mol)
+    box_size = estimate_box_size(mol, n_mols=n_mols)
 
-    topology = topology_single_liquid(mol, box_size=box_size)
+    topology = topology_single_liquid(mol, box_size=box_size, n_mols=n_mols)
     ff = ForceField(DEFAULT_FF)
     interchange: Interchange = Interchange.from_smirnoff(
         force_field=ff, topology=topology
@@ -80,12 +82,12 @@ def liq_simulation(smiles):
     mdconfig.write_lammps_input(input_file="header.in", interchange=interchange)
 
 
-def mix_simulation(smiles1, smiles2, ratio: float = 0.5):
+def mix_simulation(smiles1, smiles2, ratio: float = 0.5, n_mols: int = DEFAULT_NUM_MOLS):
     mol1 = Molecule.from_smiles(smiles1)
     mol2 = Molecule.from_smiles(smiles2)
 
     # estimates the size of the box given the number of heavy atoms
-    box_size = (estimate_box_size(mol1) + estimate_box_size(mol2)) / 2
+    box_size = (estimate_box_size(mol1, n_mols=n_mols) + estimate_box_size(mol2, n_mols=n_mols)) / 2
 
     topology = topology_binary(mol1, mol2, ratio, box_size=box_size)
     ff = ForceField(DEFAULT_FF)
