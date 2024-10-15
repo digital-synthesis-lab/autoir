@@ -21,6 +21,7 @@ def gas_sim(smiles, output, temperature, seed, equi_steps, prod_steps):
         sim_dir = output
     else: 
         sim_dir = os.path.join(os.getcwd(), sim_id)
+    os.makedirs(sim_dir, exist_ok=True)
 
     # Change to the simulation directory
     os.chdir(sim_dir)
