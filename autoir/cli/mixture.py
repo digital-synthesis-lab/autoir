@@ -16,7 +16,7 @@ from autoir.render import render_input_file, write_input_file
 @click.option("--pressure", default=1.0, help="Simulation pressure in atm")
 @click.option("--seed", default=12345, help="Random seed for the simulation")
 @click.option("--equi_steps", default=50000, help="Number of equilibration steps")
-@click.option("--prod_steps", default=300000, help="Number of production steps")
+@click.option("--prod_steps", default=100000, help="Number of production steps")
 def mixture_sim(
     smiles_1, smiles_2, output, n_mols, ratio, temperature, pressure, seed, equi_steps, prod_steps
 ):
@@ -27,6 +27,7 @@ def mixture_sim(
         sim_dir = output
     else: 
         sim_dir = os.path.join(os.getcwd(), sim_id)
+    os.makedirs(sim_dir, exist_ok=True)
 
     # Change to the simulation directory
     os.chdir(sim_dir)
