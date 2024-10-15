@@ -11,8 +11,9 @@ from openff.interchange.components._packmol import (
 
 
 DEFAULT_FF = "openff_unconstrained-2.0.0.offxml"
-DEFAULT_BOX_SIZE = 4.0  # nm for gas phase
-DEFAULT_NUM_MOLS = 200
+DEFAULT_BOX_SIZE_GAS = 4.0  # nm for gas phase
+DEFAULT_BOX_SIZE_LIQ = 2.6  # nm for liq phase
+DEFAULT_NUM_MOLS = 100
 
 
 def estimate_box_size(mol: Molecule, n_mols: int = DEFAULT_NUM_MOLS):
@@ -28,7 +29,7 @@ def topology_gas(mol: Molecule):
     return topology
 
 
-def topology_single_liquid(mol: Molecule, n_mols: int = DEFAULT_NUM_MOLS, box_size: float = 2.6):
+def topology_single_liquid(mol: Molecule, n_mols: int = DEFAULT_NUM_MOLS, box_size: float = DEFAULT_BOX_SIZE_LIQ):
     topology = pack_box(
         molecules=[mol],
         number_of_copies=[n_mols],
@@ -43,7 +44,7 @@ def topology_binary(
     mol2: Molecule,
     ratio: float = 0.5,
     n_mols: List[int] = 200,
-    box_size: float = 2.6,
+    box_size: float = DEFAULT_BOX_SIZE_LIQ,
 ):
     topology = pack_box(
         molecules=[mol1, mol2],
@@ -54,14 +55,14 @@ def topology_binary(
     return topology
 
 
-def gas_simulation(smiles):
+def gas_simulation(smiles, box_size: float = DEFAULT_BOX_SIZE_GAS):
     mol = Molecule.from_smiles(smiles)
     topology = topology_gas(mol)
     ff = ForceField(DEFAULT_FF)
     interchange: Interchange = Interchange.from_smirnoff(
         force_field=ff, topology=topology
     )
-    interchange.box = unit.Quantity([DEFAULT_BOX_SIZE] * 3, unit.nanometer)
+    interchange.box = unit.Quantity([box_size] * 3, unit.nanometer)
     interchange.to_lammps("out.lmp")
     mdconfig = MDConfig.from_interchange(interchange)
     mdconfig.write_lammps_input(input_file="header.in", interchange=interchange)
