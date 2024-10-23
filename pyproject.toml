@@ -17,6 +17,7 @@ dependencies = [
     "click",
     "jinja2",
     "scipy",
+    "openff",
 ]
 
 [project.scripts]
