@@ -58,9 +58,14 @@ def compute_spectra(autocorr, timestep, T=300):
     return wavenums, spectra_qm
 
 
-def process_file(inp_file: str = "dipoles.csv", out_file: str = "ir.csv"):
+def get_spectra_from_file(inp_file: str = "dipoles.csv"):
     autocorr, timestep = compute_autocorr(inp_file)
     wavenums, spectra = compute_spectra(autocorr, timestep)
 
     df = pd.DataFrame({"w": wavenums, "IR": spectra})
+    return df
+
+
+def process_file(inp_file: str = "dipoles.csv", out_file: str = "ir.csv"):
+    df = get_spectra_from_file(inp_file)
     df.to_csv(out_file)
