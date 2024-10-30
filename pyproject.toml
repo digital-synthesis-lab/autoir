@@ -17,7 +17,7 @@ dependencies = [
     "click",
     "jinja2",
     "scipy",
-    "openff-toolkit"
+    "openff-toolkit",
 ]
 
 [project.scripts]
