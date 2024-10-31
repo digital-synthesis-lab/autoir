@@ -1,6 +1,6 @@
 from typing import List
+from rdkit.Chem import AllChem as Chem
 from openff.toolkit import ForceField, Molecule, unit, Topology
-
 from openff.interchange import Interchange
 from openff.interchange.components.mdconfig import MDConfig
 from openff.interchange.components._packmol import (
@@ -16,10 +16,13 @@ DEFAULT_BOX_SIZE_LIQ = 2.6  # nm for liq phase
 DEFAULT_NUM_MOLS = 100
 
 
-def estimate_box_size(mol: Molecule, n_mols: int = DEFAULT_NUM_MOLS):
-    fraction = (n_mols / 200) ** (1 / 3)
-    heavy_atoms = [at for at in mol.atoms if at.atomic_number > 1]
-    return 2.7 * fraction * len(heavy_atoms) / 3
+def estimate_box_size(smiles: str, n_mols: int = DEFAULT_NUM_MOLS, scaling: float = 2):
+    mol = Chem.AddHs(Chem.MolFromSmiles(smiles))
+    Chem.EmbedMolecule(mol)
+    vol = Chem.ComputeMolVolume(mol)
+    total_vol = n_mols * scaling * vol 
+    size = total_vol ** (1 / 3)
+    return size
 
 
 def topology_gas(mol: Molecule):
