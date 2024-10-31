@@ -1,7 +1,10 @@
 include header.in
 
 timestep        0.5
+neighbor        3.0 multi
+
 thermo          200
+thermo_style custom step temp pe etotal press vol
 
 variable T equal {{ job.temperature }}
 {% if job.pressure is not none %}
