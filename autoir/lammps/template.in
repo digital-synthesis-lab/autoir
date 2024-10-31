@@ -1,6 +1,6 @@
 include header.in
 
-timestep        0.5
+timestep        0.25
 neighbor        3.0 multi
 
 thermo          200
@@ -21,9 +21,9 @@ variable        tt equal time
 # Equilibration
 velocity        all create ${T} {{ job.seed }} rot yes mom yes
 {% if job.pressure is not none %}
-fix             f1 all npt temp ${T} ${T} 100.0 iso ${P} ${P} 1000.0
+fix             f1 all npt temp ${T} ${T} $(100*dt) iso ${P} ${P} $(1000*dt)
 {% else %}
-fix             f1 all nvt temp ${T} ${T} 100.0
+fix             f1 all nvt temp ${T} ${T} $(100*dt)
 {% endif %}
 run             {{ job.equi_steps }}
 
