@@ -74,7 +74,7 @@ def gas_simulation(smiles, box_size: float = DEFAULT_BOX_SIZE_GAS):
 def liq_simulation(smiles, n_mols: int = DEFAULT_NUM_MOLS):
     mol = Molecule.from_smiles(smiles)
 
-    box_size = estimate_box_size(mol, n_mols=n_mols)
+    box_size = estimate_box_size(smiles, n_mols=n_mols)
 
     topology = topology_single_liquid(mol, box_size=box_size, n_mols=n_mols)
     ff = ForceField(DEFAULT_FF)
