@@ -20,7 +20,7 @@ def estimate_box_size(smiles: str, n_mols: int = DEFAULT_NUM_MOLS, scaling: floa
     mol = Chem.AddHs(Chem.MolFromSmiles(smiles))
     Chem.EmbedMolecule(mol)
     vol = Chem.ComputeMolVolume(mol)
-    total_vol = n_mols * scaling * vol 
+    total_vol = n_mols * scaling * vol
     size = total_vol ** (1 / 3)
     return size
 
@@ -32,7 +32,11 @@ def topology_gas(mol: Molecule):
     return topology
 
 
-def topology_single_liquid(mol: Molecule, n_mols: int = DEFAULT_NUM_MOLS, box_size: float = DEFAULT_BOX_SIZE_LIQ):
+def topology_single_liquid(
+    mol: Molecule,
+    n_mols: int = DEFAULT_NUM_MOLS,
+    box_size: float = DEFAULT_BOX_SIZE_LIQ,
+):
     topology = pack_box(
         molecules=[mol],
         number_of_copies=[n_mols],
@@ -71,10 +75,11 @@ def gas_simulation(smiles, box_size: float = DEFAULT_BOX_SIZE_GAS):
     mdconfig.write_lammps_input(input_file="header.in", interchange=interchange)
 
 
-def liq_simulation(smiles, n_mols: int = DEFAULT_NUM_MOLS):
+def liq_simulation(smiles, n_mols: int = DEFAULT_NUM_MOLS, box_size: float = None):
     mol = Molecule.from_smiles(smiles)
 
-    box_size = estimate_box_size(smiles, n_mols=n_mols)
+    if box_size is None:
+        box_size = estimate_box_size(smiles, n_mols=n_mols)
 
     topology = topology_single_liquid(mol, box_size=box_size, n_mols=n_mols)
     ff = ForceField(DEFAULT_FF)
@@ -86,12 +91,16 @@ def liq_simulation(smiles, n_mols: int = DEFAULT_NUM_MOLS):
     mdconfig.write_lammps_input(input_file="header.in", interchange=interchange)
 
 
-def mix_simulation(smiles1, smiles2, ratio: float = 0.5, n_mols: int = DEFAULT_NUM_MOLS):
+def mix_simulation(
+    smiles1, smiles2, ratio: float = 0.5, n_mols: int = DEFAULT_NUM_MOLS
+):
     mol1 = Molecule.from_smiles(smiles1)
     mol2 = Molecule.from_smiles(smiles2)
 
     # estimates the size of the box given the number of heavy atoms
-    box_size = (estimate_box_size(mol1, n_mols=n_mols) + estimate_box_size(mol2, n_mols=n_mols)) / 2
+    box_size = (
+        estimate_box_size(mol1, n_mols=n_mols) + estimate_box_size(mol2, n_mols=n_mols)
+    ) / 2
 
     topology = topology_binary(mol1, mol2, ratio, box_size=box_size)
     ff = ForceField(DEFAULT_FF)
