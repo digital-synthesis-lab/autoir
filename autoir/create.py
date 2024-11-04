@@ -80,6 +80,8 @@ def liq_simulation(smiles, n_mols: int = DEFAULT_NUM_MOLS, box_size: float = Non
 
     if box_size is None:
         box_size = estimate_box_size(smiles, n_mols=n_mols)
+    else:
+        box_size = float(box_size)
 
     topology = topology_single_liquid(mol, box_size=box_size, n_mols=n_mols)
     ff = ForceField(DEFAULT_FF)
