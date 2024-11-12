@@ -73,6 +73,7 @@ def gas_simulation(smiles, box_size: float = DEFAULT_BOX_SIZE_GAS):
     interchange.to_lammps("out.lmp")
     mdconfig = MDConfig.from_interchange(interchange)
     mdconfig.write_lammps_input(input_file="header.in", interchange=interchange)
+    return mol, topology
 
 
 def liq_simulation(smiles, n_mols: int = DEFAULT_NUM_MOLS, box_size: float = None):
@@ -91,6 +92,7 @@ def liq_simulation(smiles, n_mols: int = DEFAULT_NUM_MOLS, box_size: float = Non
     interchange.to_lammps("out.lmp")
     mdconfig = MDConfig.from_interchange(interchange)
     mdconfig.write_lammps_input(input_file="header.in", interchange=interchange)
+    return mol, topology
 
 
 def mix_simulation(
@@ -112,3 +114,4 @@ def mix_simulation(
     interchange.to_lammps("out.lmp")
     mdconfig = MDConfig.from_interchange(interchange)
     mdconfig.write_lammps_input(input_file="header.in", interchange=interchange)
+    return topology
