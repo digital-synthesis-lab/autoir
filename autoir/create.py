@@ -103,7 +103,7 @@ def mix_simulation(
 
     # estimates the size of the box given the number of heavy atoms
     box_size = (
-        estimate_box_size(mol1, n_mols=n_mols) + estimate_box_size(mol2, n_mols=n_mols)
+        estimate_box_size(smiles1, n_mols=n_mols) + estimate_box_size(smiles2, n_mols=n_mols)
     ) / 2
 
     topology = topology_binary(mol1, mol2, ratio, box_size=box_size)
