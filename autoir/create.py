@@ -25,7 +25,7 @@ def estimate_box_size(smiles: str, n_mols: int = DEFAULT_NUM_MOLS, scaling: floa
     return size
 
 
-def topology_gas(mol: Molecule):
+def topology_gas(mol: Molecule) -> Topology:
     mol.generate_conformers(n_conformers=1, rms_cutoff=0.1 * unit.angstrom),
     topology = mol.to_topology()
 
@@ -36,7 +36,7 @@ def topology_single_liquid(
     mol: Molecule,
     n_mols: int = DEFAULT_NUM_MOLS,
     box_size: float = DEFAULT_BOX_SIZE_LIQ,
-):
+) -> Topology:
     topology = pack_box(
         molecules=[mol],
         number_of_copies=[n_mols],
@@ -52,7 +52,7 @@ def topology_binary(
     ratio: float = 0.5,
     n_mols: List[int] = 200,
     box_size: float = DEFAULT_BOX_SIZE_LIQ,
-):
+) -> Topology:
     topology = pack_box(
         molecules=[mol1, mol2],
         number_of_copies=[round(n_mols * ratio), round(n_mols * (1 - ratio))],
