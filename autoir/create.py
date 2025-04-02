@@ -1,14 +1,14 @@
 from typing import List
-from rdkit.Chem import AllChem as Chem
-from openff.toolkit import ForceField, Molecule, unit, Topology
+
 from openff.interchange import Interchange
-from openff.interchange.components.mdconfig import MDConfig
 from openff.interchange.components._packmol import (
-    UNIT_CUBE,
     RHOMBIC_DODECAHEDRON,
+    UNIT_CUBE,
     pack_box,
 )
-
+from openff.interchange.components.mdconfig import MDConfig
+from openff.toolkit import ForceField, Molecule, Topology, unit
+from rdkit.Chem import AllChem as Chem
 
 DEFAULT_FF = "openff_unconstrained-2.0.0.offxml"
 DEFAULT_BOX_SIZE_GAS = 4.0  # nm for gas phase
@@ -63,7 +63,7 @@ def topology_binary(
 
 
 def gas_simulation(smiles, box_size: float = DEFAULT_BOX_SIZE_GAS):
-    mol = Molecule.from_smiles(smiles)
+    mol = Molecule.from_smiles(smiles, allow_undefined_stereo=True)
     topology = topology_gas(mol)
     ff = ForceField(DEFAULT_FF)
     interchange: Interchange = Interchange.from_smirnoff(
@@ -77,7 +77,7 @@ def gas_simulation(smiles, box_size: float = DEFAULT_BOX_SIZE_GAS):
 
 
 def liq_simulation(smiles, n_mols: int = DEFAULT_NUM_MOLS, box_size: float = None):
-    mol = Molecule.from_smiles(smiles)
+    mol = Molecule.from_smiles(smiles, allow_undefined_stereo=True)
 
     if box_size is None:
         box_size = estimate_box_size(smiles, n_mols=n_mols)
@@ -98,8 +98,8 @@ def liq_simulation(smiles, n_mols: int = DEFAULT_NUM_MOLS, box_size: float = Non
 def mix_simulation(
     smiles1, smiles2, ratio: float = 0.5, n_mols: int = DEFAULT_NUM_MOLS
 ):
-    mol1 = Molecule.from_smiles(smiles1)
-    mol2 = Molecule.from_smiles(smiles2)
+    mol1 = Molecule.from_smiles(smiles1, allow_undefined_stereo=True)
+    mol2 = Molecule.from_smiles(smiles2, allow_undefined_stereo=True)
 
     # estimates the size of the box given the number of heavy atoms
     box_size = (
