@@ -3,6 +3,7 @@ import click
 import uuid
 import os
 from autoir.create import gas_simulation
+from autoir.lammps import write_lammps_file
 from autoir.render import render_input_file, write_input_file
 
 
@@ -27,7 +28,8 @@ def gas_sim(smiles, output, temperature, seed, equi_steps, prod_steps):
     os.chdir(sim_dir)
 
     # Generate LAMMPS data file and header
-    gas_simulation(smiles)
+    topology, interchange = gas_simulation(smiles)
+    write_lammps_file(interchange)
 
     # Prepare parameters for the main input file
     params = {
@@ -43,7 +45,7 @@ def gas_sim(smiles, output, temperature, seed, equi_steps, prod_steps):
     }
 
     # Render and write the main input file
-    write_input_file(params, "gas.in")
+    write_input_file(params, "gas.in", package="lammps")
 
     with open("job.json", "w") as f:
         json.dump(params, f)
