@@ -16,7 +16,9 @@ DEFAULT_BOX_SIZE_LIQ = 2.6  # nm for liq phase
 DEFAULT_NUM_MOLS = 100
 
 
-def estimate_box_size(smiles: str, n_mols: int = DEFAULT_NUM_MOLS, scaling: float = 0.01):
+def estimate_box_size(
+    smiles: str, n_mols: int = DEFAULT_NUM_MOLS, target_density: float = 0.5
+):
     mol = Chem.AddHs(Chem.MolFromSmiles(smiles))
     Chem.EmbedMolecule(mol)
     vol = Chem.ComputeMolVolume(mol)
@@ -76,7 +78,9 @@ def gas_simulation(smiles, box_size: float = DEFAULT_BOX_SIZE_GAS):
     return mol, topology
 
 
-def liq_simulation(smiles, n_mols: int = DEFAULT_NUM_MOLS, box_size: float = None, **kwargs):
+def liq_simulation(
+    smiles, n_mols: int = DEFAULT_NUM_MOLS, box_size: float = None, **kwargs
+):
     mol = Molecule.from_smiles(smiles, allow_undefined_stereo=True)
 
     if box_size is None:
@@ -103,7 +107,8 @@ def mix_simulation(
 
     # estimates the size of the box given the number of heavy atoms
     box_size = (
-        estimate_box_size(smiles1, n_mols=n_mols, **kwargs) + estimate_box_size(smiles2, n_mols=n_mols, **kwargs)
+        estimate_box_size(smiles1, n_mols=n_mols, **kwargs)
+        + estimate_box_size(smiles2, n_mols=n_mols, **kwargs)
     ) / 2
 
     topology = topology_binary(mol1, mol2, ratio, n_mols=n_mols, box_size=box_size)
