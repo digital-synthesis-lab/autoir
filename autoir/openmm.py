@@ -1,158 +1,122 @@
 import time
 import numpy as np
-import csv
 import pandas as pd
 import openmm
 from openmm import unit
 
-from autoir.create import mix_simulation
+from autoir.openmm.reporters import DipoleReporter
+from autoir.openmm.utils import deactivate_barostat, resize_box
 
-_, interchange = mix_simulation("C1COCO1", "NCCN", n_mols=100, scaling=0.002)
+DEFAULT_LOG_FILE = "data.csv"
+DEFAULT_DIPOLES_FILE = "dipoles.csv"
+DEFAULT_TRAJ_FILE = "trajectory.pdb"
+
+DEFAULT_TIME_STEP = 2  # fs
+DEFAULT_TEMPERATURE = 300  # K
+DEFAULT_FRICTION = 1  # 1/ps
+DEFAULT_PRESSURE = 1  # atm
+DEFAULT_BAROSTAT_FREQ = 100  # steps
+DEFAULT_LOG_FREQ = 20  # steps
+DEFAULT_TRJ_FREQ = 1000  # steps
 
 
-class DipoleReporter:
-    def __init__(self, file, reportInterval, interchange):
-        self._out = open(file, "w", newline="")
-        self._writer = csv.writer(self._out)
-        self._writer.writerow(
-            ["Step", "Dipole_X_Debye", "Dipole_Y_Debye", "Dipole_Z_Debye"]
+class OpenMMSimulator:
+    def __init__(
+        self,
+        time_step: float = DEFAULT_TIME_STEP,
+        temperature: float = DEFAULT_TEMPERATURE,
+        friction: float = DEFAULT_FRICTION,
+        pressure: float = DEFAULT_PRESSURE,
+        barostat_freq: float = DEFAULT_BAROSTAT_FREQ,
+        log_freq: float = DEFAULT_LOG_FREQ,
+        trj_freq: float = DEFAULT_TRJ_FREQ,
+        trj_file: str = DEFAULT_TRAJ_FILE,
+        log_file: str = DEFAULT_LOG_FILE,
+        dipole_file: str = DEFAULT_DIPOLES_FILE,
+    ):
+        self.time_step = time_step * unit.femtoseconds  # simulation timestep
+        self.temperature = temperature * unit.kelvin  # simulation temperature
+        self.friction = friction / unit.picosecond  # collision rate
+
+        self.pressure = pressure * unit.atmosphere
+        self.barostat_freq = barostat_freq
+        self.trj_freq = trj_freq
+        self.log_freq = log_freq
+
+        self.trj_file = trj_file
+        self.log_file = log_file
+        self.dipole_file = dipole_file
+
+        self.logger = self.get_logger()
+
+    def get_logger(self):
+        logger = logging.getLogger("AutoIR")
+        handler = logging.StreamHandler()
+        formatter = logging.Formatter(
+            "AutoIR - %(asctime)s - %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
         )
-        self._reportInterval = reportInterval
+        handler.setFormatter(formatter)
+        logger.setLevel(logging.INFO)
+        logger.handlers = []
+        logger.addHandler(handler)
+        return logger
 
-        # Store the partial charges (in elementary charge units)
-        charge_dict = interchange["Electrostatics"].charges
-        num_atoms = interchange.topology.n_atoms
-        self._charges = np.zeros(num_atoms)  # plain array of charges (in e)
+    def create_simulation(self, interchange):
+        simulation = interchange.to_openmm_simulation(self.get_integrator())
+        simulation.system.addForce(self.get_barostat())
+        simulation.context.reinitialize(True)
+        simulation.context.setVelocitiesToTemperature(self.temperature)
+        simulation.reporters.append(self.get_data_reporter())
+        return simulation
 
-        for key, value in charge_dict.items():
-            atom_idx = key.atom_indices[0]  # TopologyKey holds a tuple like (i,)
-            self._charges[atom_idx] = value.m
-
-    def describeNextReport(self, simulation):
-        steps = self._reportInterval - simulation.currentStep % self._reportInterval
-        return (steps, True, False, False, False)
-
-    def report(self, simulation, state):
-        positions = state.getPositions(asNumpy=True)._value * 10  # Å
-        # Compute dipole vector in e·nm
-        # dipole = sum(q * pos for q, pos in zip(self._charges, positions))
-        charges_quantity = self._charges  # unit: charge
-        dipole = np.sum(
-            charges_quantity[:, None] * positions, axis=0
-        )  # shape (3,), units: e·nm
-
-        self._writer.writerow(
-            [
-                simulation.context.getTime().value_in_unit(unit.femtosecond),
-                dipole[0],
-                dipole[1],
-                dipole[2],
-            ]
+    def get_integrator(self):
+        return openmm.LangevinIntegrator(
+            self.temperature, self.friction, self.time_step
         )
 
-    def __del__(self):
-        self._out.close()
+    def get_barostat(self):
+        return openmm.MonteCarloBarostat(
+            self.pressure, self.temperature, self.barostat_freq
+        )
 
+    def get_data_reporter(self):
+        return openmm.app.StateDataReporter(
+            self.log_file,
+            self.log_freq,
+            step=True,
+            potentialEnergy=True,
+            temperature=True,
+            density=True,
+            volume=True,
+        )
 
-# Propagate the System with Langevin dynamics.
-time_step = 2 * unit.femtoseconds  # simulation timestep
-temperature = 300 * unit.kelvin  # simulation temperature
-friction = 1 / unit.picosecond  # collision rate
-integrator = openmm.LangevinIntegrator(temperature, friction, time_step)
+    def get_traj_reporter(self):
+        return openmm.app.PDBReporter(
+            self.trj_file, self.trj_freq, enforcePeriodicBox=True
+        )
 
-# Define pressure and barostat frequency
-pressure = 1.0 * unit.atmosphere
-barostat_frequency = 100  # in steps
+    def get_dipole_reporter(self, interchange):
+        return DipoleReporter(
+            self.dipoles_file, reportInterval=1, interchange=interchange
+        )
 
+    def run(
+        self,
+        interchange,
+        npt_equi_steps=100_000,
+        nvt_equi_steps=100_000,
+        nvt_prod_steps=1_000_000,
+        npt_equi_volume_steps=200,
+    ):
+        simulation = self.get_simulation(interchange)
+        self.logger.info("NPT equilibration")
+        simulation.step(npt_equi_steps)
 
-# Logging options.
-trj_freq = 1000  # number of steps per written trajectory frame
-data_freq = 100  # number of steps per written simulation statistics
+        self.logger.info("NVT equilibration")
+        resize_box(simulation, log_file=self.log_file, last_n=npt_equi_volume_steps)
+        simulation.step(nvt_equi_steps)
 
-# Set up an OpenMM simulation.
-simulation = interchange.to_openmm_simulation(integrator)
-# simulation = openmm.app.Simulation(interchange.topology.to_openmm(), system, integrator)
-simulation.system.addForce(
-    openmm.MonteCarloBarostat(pressure, temperature, barostat_frequency)
-)
-simulation.context.reinitialize(True)
-
-# Randomize the velocities from a Boltzmann distribution at a given temperature.
-simulation.context.setVelocitiesToTemperature(temperature)
-
-# Configure the information in the output files.
-state_data_reporter = openmm.app.StateDataReporter(
-    "data.csv",
-    data_freq,
-    step=True,
-    potentialEnergy=True,
-    temperature=True,
-    density=True,
-    volume=True,
-)
-simulation.reporters.append(state_data_reporter)
-
-# Length of the simulation.
-num_steps = 20000  # number of integration steps to run
-
-
-print("Initial equilibration")
-start = time.process_time()
-
-# Run the simulation
-simulation.step(num_steps)
-
-end = time.process_time()
-print("Elapsed time %.2f seconds" % (end - start))
-print("Done!")
-
-# simulation.context.reinitialize(True)
-for i, f in enumerate(simulation.system.getForces()):
-    if isinstance(f, openmm.MonteCarloBarostat):
-        f.setFrequency(0)
-        simulation.system.removeForce(i)
-
-
-# load the data
-df = pd.read_csv("data.csv")
-mean_vol = df.iloc[-100:]["Box Volume (nm^3)"].mean()
-mean_a = np.power(mean_vol, 1 / 3)
-lattice = np.eye(3) * mean_a
-print(mean_vol, mean_a)
-simulation.context.setPeriodicBoxVectors(*lattice)
-simulation.context.reinitialize(True)
-
-# Length of the simulation.
-num_steps = 40000  # number of integration steps to run
-
-print("NVT Equilibration")
-start = time.process_time()
-
-# Run the simulation
-simulation.step(num_steps)
-
-end = time.process_time()
-print("Elapsed time %.2f seconds" % (end - start))
-
-
-## Production
-print("Production")
-pdb_reporter = openmm.app.PDBReporter(
-    "trajectory.pdb", trj_freq, enforcePeriodicBox=True
-)
-simulation.reporters.append(pdb_reporter)
-dipole_reporter = DipoleReporter(
-    "dipoles.csv", reportInterval=1, interchange=interchange
-)
-simulation.reporters.append(dipole_reporter)
-
-
-num_steps = 400000  # number of integration steps to run
-start = time.process_time()
-
-# Run the simulation
-simulation.step(num_steps)
-
-end = time.process_time()
-print("Elapsed time %.2f seconds" % (end - start))
-print("Done!")
+        self.logger.info("NVT Production")
+        simulation.reporters.append(self.get_traj_reporter())
+        simulation.reporters.append(self.get_dipole_reporter())
+        simulation.step(nvt_prod_steps)
