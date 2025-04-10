@@ -85,8 +85,18 @@ def mixture_sim(
         )
     runtime = t.time
 
-    click.echo("Processing and saving file")
-    process_file(DEFAULT_DIPOLES_FILE, out_file="ir.csv")
+    click.echo("Processing and saving files")
+    # uses the last half of the production simulation
+    prod = pd.read_csv("prod.csv")
+    prod = prod.iloc[len(prod) // 2:]
+
+    avg_E = prod['Potential Energy (kJ/mole)'].mean()
+    avg_D = prod['Density (g/mL)'].mean()
+    avg_V = prod['Box Volume (nm^3)'].mean()
+
+    # computes and processes the infrared spectra
+    df = process_file(DEFAULT_DIPOLES_FILE, out_file="ir.csv")
+    wn, ir = smooth_ir(df)
 
     params = {
         "id": sim_id,
@@ -104,6 +114,10 @@ def mixture_sim(
         "trj_freq": trj_freq,
         "phase": "mixture",
         "runtime": runtime,
+        "avg_energy": avg_E,
+        "avg_density": avg_D,
+        "avg_volume": avg_V,
+        "ir": ir.tolist()
     }
 
     with open("job.json", "w") as f:

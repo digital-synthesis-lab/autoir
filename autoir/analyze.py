@@ -82,6 +82,7 @@ def process_file(
 ):
     df = get_spectra_from_file(inp_file, truncate_autocorr)
     df.to_csv(out_file)
+    return df
 
 
 def smooth_ir(df: pd.DataFrame, wn_min: int=400, wn_max: int=4000, wn_resolution: int = 4, sigma: float = 1):
