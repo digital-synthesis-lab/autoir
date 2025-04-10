@@ -16,7 +16,7 @@ from autoir.openmm.simulator import DEFAULT_DIPOLES_FILE, OpenMMSimulator
 @click.option("--temperature", default=300, help="Simulation temperature in K (default: 300 K)")
 @click.option("--seed", default=12345, help="Random seed for the simulation")
 @click.option("--nvt_equi_steps", default=100_000, help="Number of equilibration steps")
-@click.option("--nvt_prod_steps", default=500_000, help="Number of production steps")
+@click.option("--nvt_prod_steps", default=300_000, help="Number of production steps")
 @click.option(
     "--trj_freq", default=10_000, help="Number of steps for dumping the trajectory"
 )
