@@ -112,7 +112,7 @@ def mix_simulation(
     box2 = estimate_box_size(smiles2, n_mols=n_mols, target_density=target_density)
     box_size = box1 * ratio + box2 * (1 - ratio)
 
-    topology = topology_binary(mol1, mol2, ratio, n_mols=n_mols, box_size=box_size)
+    topology = topology_binary(mol1, mol2, ratio=ratio, n_mols=n_mols, box_size=box_size)
     ff = ForceField(DEFAULT_FF)
     interchange: Interchange = Interchange.from_smirnoff(
         force_field=ff, topology=topology

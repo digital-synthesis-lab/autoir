@@ -8,7 +8,7 @@ from autoir.create import DEFAULT_NUM_MOLS, mix_simulation
 from autoir.openmm.simulator import DEFAULT_DIPOLES_FILE, OpenMMSimulator
 
 
-@click.command("liquid")
+@click.command("mixture")
 @click.argument("smiles_1")
 @click.argument("smiles_2")
 @click.option("-o", "--output", default=None, help="Output directory")
@@ -64,7 +64,7 @@ def mixture_sim(
     click.echo("Creating mixture box")
     # Generate LAMMPS data file and header
     topology, interchange = mix_simulation(
-        smiles, n_mols=n_mols, target_density=target_density
+        smiles_1, smiles_2, ratio=ratio, n_mols=n_mols, target_density=target_density
     )
 
     # Prepare parameters for the main input file
