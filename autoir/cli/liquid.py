@@ -4,6 +4,7 @@ import uuid
 
 import click
 from autoir.analyze import process_file
+from autoir.timer import Timer
 from autoir.create import DEFAULT_NUM_MOLS, liq_simulation
 from autoir.openmm.simulator import DEFAULT_DIPOLES_FILE, OpenMMSimulator
 
@@ -58,25 +59,11 @@ def liquid_sim(
     os.chdir(sim_dir)
 
     click.echo("Creating liquid box")
+
     # Generate LAMMPS data file and header
     topology, interchange = liq_simulation(
         smiles, n_mols=n_mols, target_density=target_density
     )
-
-    # Prepare parameters for the main input file
-    params = {
-        "id": sim_id,
-        "smiles": smiles,
-        "n_mols": n_mols,
-        "temperature": temperature,
-        "pressure": pressure,
-        "seed": seed,
-        "npt_equi_steps": npt_equi_steps,
-        "nvt_equi_steps": nvt_equi_steps,
-        "nvt_prod_steps": nvt_prod_steps,
-        "trj_freq": trj_freq,
-        "phase": "liquid",
-    }
 
     sim = OpenMMSimulator(
         time_step=time_step,
@@ -85,15 +72,34 @@ def liquid_sim(
         trj_freq=trj_freq,
     )
 
-    sim.run(
-        interchange,
-        npt_equi_steps=npt_equi_steps,
-        nvt_equi_steps=nvt_equi_steps,
-        nvt_prod_steps=nvt_prod_steps,
-    )
+    with Timer() as t:
+        sim.run(
+            interchange,
+            npt_equi_steps=npt_equi_steps,
+            nvt_equi_steps=nvt_equi_steps,
+            nvt_prod_steps=nvt_prod_steps,
+        )
+    runtime = t.time
 
     click.echo("Processing and saving file")
     process_file(DEFAULT_DIPOLES_FILE, out_file="ir.csv")
+
+    # Prepare parameters for reproducibility
+    params = {
+        "id": sim_id,
+        "smiles": smiles,
+        "n_mols": n_mols,
+        "n_atoms": topology.n_atoms,
+        "temperature": temperature,
+        "pressure": pressure,
+        "seed": seed,
+        "npt_equi_steps": npt_equi_steps,
+        "nvt_equi_steps": nvt_equi_steps,
+        "nvt_prod_steps": nvt_prod_steps,
+        "trj_freq": trj_freq,
+        "phase": "liquid",
+        "runtime": runtime,
+    }
 
     with open("job.json", "w") as f:
         json.dump(params, f)

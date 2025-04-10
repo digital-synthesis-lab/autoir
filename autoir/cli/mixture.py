@@ -4,6 +4,7 @@ import uuid
 
 import click
 from autoir.analyze import process_file
+from autoir.timer import Timer
 from autoir.create import DEFAULT_NUM_MOLS, mix_simulation
 from autoir.openmm.simulator import DEFAULT_DIPOLES_FILE, OpenMMSimulator
 
@@ -68,11 +69,31 @@ def mixture_sim(
     )
 
     # Prepare parameters for the main input file
+    sim = OpenMMSimulator(
+        time_step=time_step,
+        temperature=temperature,
+        pressure=pressure,
+        trj_freq=trj_freq,
+    )
+
+    with Timer() as t:
+        sim.run(
+            interchange,
+            npt_equi_steps=npt_equi_steps,
+            nvt_equi_steps=nvt_equi_steps,
+            nvt_prod_steps=nvt_prod_steps,
+        )
+    runtime = t.time
+
+    click.echo("Processing and saving file")
+    process_file(DEFAULT_DIPOLES_FILE, out_file="ir.csv")
+
     params = {
         "id": sim_id,
         "smiles_1": smiles_1,
         "smiles_2": smiles_2,
         "n_mols": n_mols,
+        "n_atoms": topology.n_atoms,
         "ratio": ratio,
         "temperature": temperature,
         "pressure": pressure,
@@ -82,24 +103,8 @@ def mixture_sim(
         "nvt_prod_steps": nvt_prod_steps,
         "trj_freq": trj_freq,
         "phase": "mixture",
+        "runtime": runtime,
     }
-
-    sim = OpenMMSimulator(
-        time_step=time_step,
-        temperature=temperature,
-        pressure=pressure,
-        trj_freq=trj_freq,
-    )
-
-    sim.run(
-        interchange,
-        npt_equi_steps=npt_equi_steps,
-        nvt_equi_steps=nvt_equi_steps,
-        nvt_prod_steps=nvt_prod_steps,
-    )
-
-    click.echo("Processing and saving file")
-    process_file(DEFAULT_DIPOLES_FILE, out_file="ir.csv")
 
     with open("job.json", "w") as f:
         json.dump(params, f)
