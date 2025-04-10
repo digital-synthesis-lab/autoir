@@ -136,7 +136,4 @@ class OpenMMSimulator:
         simulation.reporters.append(self.get_dipole_reporter(interchange))
         simulation.step(nvt_prod_steps)
 
-        self.logger.info(f"Writing dipoles to file")
-        simulations.reporters.remove(-1)
-
         self.logger.info(f"Production simulation done")
