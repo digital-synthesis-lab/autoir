@@ -6,9 +6,8 @@ from openmm import unit
 
 class DipoleReporter:
     def __init__(self, file: str, report_interval: int, interchange: Interchange):
-        self._out = open(file, "w", newline="")
-        self._writer = csv.writer(self._out)
-        self._writer.writerow(["Step", "DipoleX", "DipoleY", "DipoleZ"])
+        self.output = file
+        self._results = []
         self._report_interval = report_interval
 
         # Store the partial charges (in elementary charge units)
@@ -31,7 +30,7 @@ class DipoleReporter:
             charges_quantity[:, None] * positions, axis=0
         )  # shape (3,), units: e·Å
 
-        self._writer.writerow(
+        self._results.append(
             [
                 simulation.context.getTime().value_in_unit(unit.femtosecond),
                 dipole[0],
@@ -41,4 +40,9 @@ class DipoleReporter:
         )
 
     def __del__(self):
-        self._out.close()
+        with open(self.output, "w", newline="") as f:
+            self._writer = csv.writer(f)
+            self._writer.writerow(["Step", "DipoleX", "DipoleY", "DipoleZ"])
+
+            for line in self._results:
+                self._writer.writerow(line)

@@ -90,6 +90,7 @@ class OpenMMSimulator:
             log_file,
             self.log_freq,
             step=True,
+            time=True,
             potentialEnergy=True,
             temperature=True,
             density=True,
@@ -134,4 +135,8 @@ class OpenMMSimulator:
         simulation.reporters.append(self.get_traj_reporter())
         simulation.reporters.append(self.get_dipole_reporter(interchange))
         simulation.step(nvt_prod_steps)
+
+        self.logger.info(f"Writing dipoles to file")
+        simulations.reporters.remove(-1)
+
         self.logger.info(f"Production simulation done")
