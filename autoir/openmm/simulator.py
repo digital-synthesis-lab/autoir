@@ -65,10 +65,13 @@ class OpenMMSimulator:
         logger.addHandler(handler)
         return logger
 
-    def create_simulation(self, interchange: Interchange):
+    def create_simulation(self, interchange: Interchange, barostat: bool = True):
         simulation = interchange.to_openmm_simulation(self.get_integrator())
-        simulation.system.addForce(self.get_barostat())
-        simulation.context.reinitialize(True)
+
+        if barostat:
+            simulation.system.addForce(self.get_barostat())
+            simulation.context.reinitialize(True)
+
         simulation.context.setVelocitiesToTemperature(self.temperature)
         return simulation
 
@@ -112,13 +115,16 @@ class OpenMMSimulator:
         npt_equi_volume_steps=1000,
     ):
         self.logger.info("Creating simulation")
-        simulation = self.create_simulation(interchange)
+        has_npt = npt_equi_steps > 0
+        simulation = self.create_simulation(interchange, barostat=has_npt)
         simulation.reporters.append(self.get_data_reporter(self.equi_file))
-        self.logger.info(f"NPT equilibration for {npt_equi_steps} steps")
-        simulation.step(npt_equi_steps)
+
+        if has_npt:
+            self.logger.info(f"NPT equilibration for {npt_equi_steps} steps")
+            simulation.step(npt_equi_steps)
+            deactivate_barostat(simulation)
 
         self.logger.info(f"NVT equilibration for {nvt_equi_steps} steps")
-        deactivate_barostat(simulation)
         resize_box(simulation, log_file=self.equi_file, last_n=npt_equi_volume_steps)
         simulation.step(nvt_equi_steps)
 
