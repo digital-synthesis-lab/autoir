@@ -28,7 +28,7 @@ from autoir.openmm.simulator import DEFAULT_DIPOLES_FILE, OpenMMSimulator
 @click.option("--nvt_equi_steps", default=50_000, help="Number of equilibration steps")
 @click.option("--nvt_prod_steps", default=1_000_000, help="Number of production steps")
 @click.option(
-    "--trj_freq", default=5000, help="Number of steps for dumping the trajectory"
+    "--trj_freq", default=10_000, help="Number of steps for dumping the trajectory"
 )
 def liquid_sim(
     smiles,
