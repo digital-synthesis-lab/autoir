@@ -10,6 +10,7 @@ from .utils import deactivate_barostat, deactivate_data_reporters, resize_box
 
 DEFAULT_PROD_FILE = "prod.csv"
 DEFAULT_EQUI_FILE = "equi.csv"
+DEFAULT_AVGE_FILE = "avgE.csv"
 DEFAULT_DIPOLES_FILE = "dipoles.csv"
 DEFAULT_TRAJ_FILE = "trajectory.pdb"
 
@@ -131,7 +132,7 @@ class OpenMMSimulator:
         deactivate_data_reporters(simulation)
         simulation.reporters.append(self.get_traj_reporter())
         simulation.reporters.append(self.get_dipole_reporter(interchange))
-        simulation.reporters.append(AverageEnergyReporter("avgE.csv", reportInterval=1))
+        simulation.reporters.append(AverageEnergyReporter("avgE.csv", reportInterval=1, startingStep=nvt_prod_steps // 2))
         simulation.reporters.append(FastDataReporter(
             self.prod_file,
             reportInterval=self.log_freq,

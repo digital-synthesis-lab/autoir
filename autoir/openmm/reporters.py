@@ -22,7 +22,7 @@ class DipoleReporter:
 
     def describeNextReport(self, simulation):
         steps = self._reportInterval - simulation.currentStep % self._reportInterval
-        return (steps, True, False, False, False)
+        return {'steps': steps, 'periodic': True, 'include':['positions']}
 
     def report(self, simulation, state):
         positions = state.getPositions(asNumpy=True)._value * 10  # Å
@@ -341,6 +341,7 @@ class AverageEnergyReporter:
         self,
         file,
         reportInterval,
+        startingStep: int = 0,
     ):
         """Create a StateDataReporter.
 
@@ -403,6 +404,7 @@ class AverageEnergyReporter:
         self._hasInitialized = False
         self._n = None
         self._avgE = None
+        self._startingStep = startingStep
 
     def describeNextReport(self, simulation):
         """Get information about the next report this object will generate.
@@ -417,7 +419,7 @@ class AverageEnergyReporter:
         dict
             A dictionary describing the required information for the next report
         """
-        steps = self._reportInterval - simulation.currentStep % self._reportInterval
+        steps = self._reportInterval - simulation.currentStep % self._reportInterval + max(0, self._startingStep - simulation.currentStep)
         return {"steps": steps, "periodic": None, "include": self._includes}
 
     def report(self, simulation, state):
@@ -442,4 +444,4 @@ class AverageEnergyReporter:
     def __del__(self):
         with open(self.output, "w", newline="") as f:
             f.write("n_points,avgE (kJ/mol)\n")
-            f.write(f"{self._n},{self._avgE:.8f}")
+            f.write(f"{self._n - 1},{self._avgE:.8f}")
