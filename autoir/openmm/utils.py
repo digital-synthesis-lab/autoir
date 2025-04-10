@@ -2,6 +2,8 @@ import numpy as np
 import pandas as pd
 import openmm
 
+from .reporters import FastDataReporter
+
 
 def resize_box(simulation, log_file: str = "data.csv", last_n: int = 2000):
     # load the data
@@ -28,6 +30,9 @@ def deactivate_data_reporters(simulation):
     to_remove = []
     for i, f in enumerate(simulation.reporters):
         if isinstance(f, openmm.app.StateDataReporter):
+            to_remove.append(i)
+
+        elif isinstance(f, FastDataReporter):
             to_remove.append(i)
 
     for i in sorted(to_remove, reverse=True):

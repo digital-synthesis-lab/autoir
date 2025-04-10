@@ -54,7 +54,7 @@ class FastDataReporter:
 
     To use it, create a StateDataReporter, then add it to the Simulation's list of reporters.  The set of
     data to write is configurable using boolean flags passed to the constructor.  By default the data is
-    written in comma-separated-value (CSV) format, but you can specify a different separator to use.
+    written in comma-separated-value (CSV) format.
     """
 
     def __init__(
@@ -114,8 +114,6 @@ class FastDataReporter:
         elapsedTime : bool=False
             Whether to write the elapsed time of the simulation in seconds to
             the file.
-        separator : string=','
-            The separator to use between columns in the file
         systemMass : mass=None
             The total mass to use for the system when reporting density.  If
             this is None (the default), the system mass is computed by summing
@@ -150,7 +148,6 @@ class FastDataReporter:
         self._temperature = temperature
         self._volume = volume
         self._density = density
-        self._separator = separator
         self._totalMass = systemMass
         self._totalSteps = totalSteps
         self._append = append
@@ -192,11 +189,6 @@ class FastDataReporter:
         if not self._hasInitialized:
             self._initializeConstants(simulation)
             headers = self._constructHeaders()
-            if not self._append:
-                print(
-                    '#"%s"' % ('"' + self._separator + '"').join(headers),
-                    file=self._out,
-                )
             self._results.append(headers)
             self._hasInitialized = True
 
@@ -292,7 +284,7 @@ class FastDataReporter:
                 ):
                     dof -= 1
             if any(
-                type(system.getForce(i)) == mm.CMMotionRemover
+                type(system.getForce(i)) == openmm.CMMotionRemover
                 for i in range(system.getNumForces())
             ):
                 dof -= 3
