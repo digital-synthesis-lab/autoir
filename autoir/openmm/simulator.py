@@ -1,13 +1,15 @@
 import logging
+
 from openff.interchange import Interchange
 
 import openmm
 from openmm import unit
 
 from .reporters import DipoleReporter
-from .utils import deactivate_barostat, resize_box
+from .utils import deactivate_barostat, deactivate_data_reporters, resize_box
 
-DEFAULT_LOG_FILE = "data.csv"
+DEFAULT_PROD_FILE = "prod.csv"
+DEFAULT_EQUI_FILE = "equi.csv"
 DEFAULT_DIPOLES_FILE = "dipoles.csv"
 DEFAULT_TRAJ_FILE = "trajectory.pdb"
 
@@ -31,7 +33,8 @@ class OpenMMSimulator:
         log_freq: float = DEFAULT_LOG_FREQ,
         trj_freq: float = DEFAULT_TRJ_FREQ,
         trj_file: str = DEFAULT_TRAJ_FILE,
-        log_file: str = DEFAULT_LOG_FILE,
+        equi_file: str = DEFAULT_EQUI_FILE,
+        prod_file: str = DEFAULT_PROD_FILE,
         dipole_file: str = DEFAULT_DIPOLES_FILE,
     ):
         self.time_step = time_step * unit.femtoseconds  # simulation timestep
@@ -44,7 +47,8 @@ class OpenMMSimulator:
         self.log_freq = log_freq
 
         self.trj_file = trj_file
-        self.log_file = log_file
+        self.equi_file = equi_file
+        self.prod_file = prod_file
         self.dipole_file = dipole_file
 
         self.logger = self.get_logger()
@@ -66,7 +70,6 @@ class OpenMMSimulator:
         simulation.system.addForce(self.get_barostat())
         simulation.context.reinitialize(True)
         simulation.context.setVelocitiesToTemperature(self.temperature)
-        simulation.reporters.append(self.get_data_reporter())
         return simulation
 
     def get_integrator(self):
@@ -79,9 +82,9 @@ class OpenMMSimulator:
             self.pressure, self.temperature, self.barostat_freq
         )
 
-    def get_data_reporter(self):
+    def get_data_reporter(self, log_file):
         return openmm.app.StateDataReporter(
-            self.log_file,
+            log_file,
             self.log_freq,
             step=True,
             potentialEnergy=True,
@@ -110,15 +113,18 @@ class OpenMMSimulator:
     ):
         self.logger.info("Creating simulation")
         simulation = self.create_simulation(interchange)
+        simulation.reporters.append(self.get_data_reporter(self.equi_file))
         self.logger.info(f"NPT equilibration for {npt_equi_steps} steps")
         simulation.step(npt_equi_steps)
 
         self.logger.info(f"NVT equilibration for {nvt_equi_steps} steps")
         deactivate_barostat(simulation)
-        resize_box(simulation, log_file=self.log_file, last_n=npt_equi_volume_steps)
+        resize_box(simulation, log_file=self.equi_file, last_n=npt_equi_volume_steps)
         simulation.step(nvt_equi_steps)
 
         self.logger.info(f"NVT production for {nvt_prod_steps} steps")
+        deactivate_data_reporters(simulation)
+        simulation.reporters.append(self.get_data_reporter(self.prod_file))
         simulation.reporters.append(self.get_traj_reporter())
         simulation.reporters.append(self.get_dipole_reporter(interchange))
         simulation.step(nvt_prod_steps)

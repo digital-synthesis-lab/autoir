@@ -14,7 +14,7 @@ from rdkit.Chem import Descriptors
 DEFAULT_FF = "openff_unconstrained-2.0.0.offxml"
 DEFAULT_BOX_SIZE_GAS = 4.0  # nm for gas phase
 DEFAULT_DENSITY = 0.5  # g/cm3
-DEFAULT_NUM_MOLS = 200
+DEFAULT_NUM_MOLS = 100
 N_AVOGADRO = 6.02214076e23
 
 

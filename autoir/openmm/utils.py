@@ -21,3 +21,15 @@ def deactivate_barostat(simulation):
             simulation.system.removeForce(i)
 
     return simulation
+
+
+def deactivate_data_reporters(simulation):
+    to_remove = []
+    for i, f in enumerate(simulation.reporters):
+        if isinstance(f, openmm.app.StateDataReporter):
+            to_remove.append(i)
+
+    for i in sorted(to_remove, reverse=True):
+        simulation.reporters.pop(i)
+
+    return simulation
