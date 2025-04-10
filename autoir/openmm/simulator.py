@@ -1,11 +1,10 @@
-import time
-import numpy as np
-import pandas as pd
+from openff.interchange import Interchange
+
 import openmm
 from openmm import unit
 
-from autoir.openmm.reporters import DipoleReporter
-from autoir.openmm.utils import deactivate_barostat, resize_box
+from .reporters import DipoleReporter
+from .utils import deactivate_barostat, resize_box
 
 DEFAULT_LOG_FILE = "data.csv"
 DEFAULT_DIPOLES_FILE = "dipoles.csv"
@@ -61,7 +60,7 @@ class OpenMMSimulator:
         logger.addHandler(handler)
         return logger
 
-    def create_simulation(self, interchange):
+    def create_simulation(self, interchange: Interchange):
         simulation = interchange.to_openmm_simulation(self.get_integrator())
         simulation.system.addForce(self.get_barostat())
         simulation.context.reinitialize(True)
@@ -95,14 +94,14 @@ class OpenMMSimulator:
             self.trj_file, self.trj_freq, enforcePeriodicBox=True
         )
 
-    def get_dipole_reporter(self, interchange):
+    def get_dipole_reporter(self, interchange: Interchange):
         return DipoleReporter(
             self.dipoles_file, reportInterval=1, interchange=interchange
         )
 
     def run(
         self,
-        interchange,
+        interchange: Interchange,
         npt_equi_steps=100_000,
         nvt_equi_steps=100_000,
         nvt_prod_steps=1_000_000,
@@ -114,6 +113,7 @@ class OpenMMSimulator:
         simulation.step(npt_equi_steps)
 
         self.logger.info("NVT equilibration")
+        deactivate_barostat(simulation)
         resize_box(simulation, log_file=self.log_file, last_n=npt_equi_volume_steps)
         simulation.step(nvt_equi_steps)
 

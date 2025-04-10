@@ -3,7 +3,7 @@ import numpy as np
 from scipy import fftpack, signal
 
 from . import const
-from .openmm import DEFAULT_DIPOLES_FILE
+from autoir.openmm.simulator import DEFAULT_DIPOLES_FILE
 
 
 def compute_autocorr(filename: str = DEFAULT_DIPOLES_FILE, truncate_autocorr: int = 20000):

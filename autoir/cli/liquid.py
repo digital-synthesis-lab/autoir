@@ -5,7 +5,7 @@ import uuid
 import click
 from autoir.analyze import process_file
 from autoir.create import DEFAULT_NUM_MOLS, liq_simulation
-from autoir.openmm import DEFAULT_DIPOLES_FILE, OpenMMSimulator
+from autoir.openmm.simulator import DEFAULT_DIPOLES_FILE, OpenMMSimulator
 
 
 @click.command("liquid")

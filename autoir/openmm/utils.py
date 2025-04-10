@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 
 
-def resize_box(simulation, log_file: str = "data.csv", last_n: 100):
+def resize_box(simulation, log_file: str = "data.csv", last_n: int = 100):
     # load the data
     df = pd.read_csv(log_file)
     mean_vol = df.iloc[-last_n:]["Box Volume (nm^3)"].mean()
