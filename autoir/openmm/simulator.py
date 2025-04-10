@@ -123,9 +123,9 @@ class OpenMMSimulator:
             self.logger.info(f"NPT equilibration for {npt_equi_steps} steps")
             simulation.step(npt_equi_steps)
             deactivate_barostat(simulation)
+            resize_box(simulation, log_file=self.equi_file, last_n=npt_equi_volume_steps)
 
         self.logger.info(f"NVT equilibration for {nvt_equi_steps} steps")
-        resize_box(simulation, log_file=self.equi_file, last_n=npt_equi_volume_steps)
         simulation.step(nvt_equi_steps)
 
         self.logger.info(f"NVT production for {nvt_prod_steps} steps")
