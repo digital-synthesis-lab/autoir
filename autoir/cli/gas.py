@@ -7,14 +7,23 @@ import click
 from autoir.analyze import process_file, smooth_ir
 from autoir.timer import Timer
 from autoir.create import gas_simulation
-from autoir.openmm.simulator import DEFAULT_DIPOLES_FILE, OpenMMSimulator
+from autoir.openmm.simulator import (
+    DEFAULT_DIPOLES_FILE,
+    DEFAULT_PROD_FILE,
+    DEFAULT_EQUI_FILE,
+    OpenMMSimulator,
+)
 
 
 @click.command("gas")
 @click.argument("smiles")
 @click.option("-o", "--output", default=None, help="Output directory")
-@click.option("--time_step", default=2, help="Simulation timestep in fs (default: 2 fs)")
-@click.option("--temperature", default=300, help="Simulation temperature in K (default: 300 K)")
+@click.option(
+    "--time_step", default=2, help="Simulation timestep in fs (default: 2 fs)"
+)
+@click.option(
+    "--temperature", default=300, help="Simulation temperature in K (default: 300 K)"
+)
 @click.option("--seed", default=12345, help="Random seed for the simulation")
 @click.option("--nvt_equi_steps", default=100_000, help="Number of equilibration steps")
 @click.option("--nvt_prod_steps", default=300_000, help="Number of production steps")
@@ -67,13 +76,16 @@ def gas_sim(
 
     click.echo("Processing and saving files")
 
-    # uses the last half of the production simulation
-    prod = pd.read_csv("prod.csv")
-    prod = prod.iloc[len(prod) // 2:]
+    # the volume is computed from the NVT simulation
+    equi = pd.read_csv(DEFAULT_EQUI_FILE)
+    avg_D = equi.iloc[-1]["Density (g/mL)"]
+    avg_V = equi.iloc[-1]["Box Volume (nm^3)"]
 
-    avg_E = prod['Potential Energy (kJ/mole)'].mean()
-    avg_D = prod['Density (g/mL)'].mean()
-    avg_V = prod['Box Volume (nm^3)'].mean()
+    # uses the last half of the production simulation
+    prod = pd.read_csv(DEFAULT_PROD_FILE)
+    prod = prod.iloc[len(prod) // 2 :]
+
+    avg_E = prod["Potential Energy (kJ/mole)"].mean()
 
     # computes and processes the infrared spectra
     df = process_file(DEFAULT_DIPOLES_FILE, out_file="ir.csv")
@@ -97,7 +109,7 @@ def gas_sim(
         "avg_energy": avg_E,
         "avg_density": avg_D,
         "avg_volume": avg_V,
-        "ir": ir.tolist()
+        "ir": ir.tolist(),
     }
 
     with open("job.json", "w") as f:

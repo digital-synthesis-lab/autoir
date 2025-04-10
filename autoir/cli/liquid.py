@@ -4,10 +4,15 @@ import uuid
 import pandas as pd
 
 import click
-from autoir.analyze import process_file
+from autoir.analyze import process_file, smooth_ir
 from autoir.timer import Timer
 from autoir.create import DEFAULT_NUM_MOLS, liq_simulation
-from autoir.openmm.simulator import DEFAULT_DIPOLES_FILE, OpenMMSimulator
+from autoir.openmm.simulator import (
+    DEFAULT_DIPOLES_FILE,
+    DEFAULT_PROD_FILE,
+    DEFAULT_EQUI_FILE,
+    OpenMMSimulator,
+)
 
 
 @click.command("liquid")
@@ -83,13 +88,17 @@ def liquid_sim(
     runtime = t.time
 
     click.echo("Processing and saving files")
+
+    # the volume is computed from the NVT simulation
+    equi = pd.read_csv(DEFAULT_EQUI_FILE)
+    avg_D = equi.iloc[-1]["Density (g/mL)"]
+    avg_V = equi.iloc[-1]["Box Volume (nm^3)"]
+
     # uses the last half of the production simulation
-    prod = pd.read_csv("prod.csv")
+    prod = pd.read_csv(DEFAULT_PROD_FILE)
     prod = prod.iloc[len(prod) // 2:]
 
     avg_E = prod['Potential Energy (kJ/mole)'].mean()
-    avg_D = prod['Density (g/mL)'].mean()
-    avg_V = prod['Box Volume (nm^3)'].mean()
 
     # computes and processes the infrared spectra
     df = process_file(DEFAULT_DIPOLES_FILE, out_file="ir.csv")
