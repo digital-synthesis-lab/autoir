@@ -106,7 +106,6 @@ class OpenMMSimulator:
         npt_equi_steps=100_000,
         nvt_equi_steps=100_000,
         nvt_prod_steps=1_000_000,
-        npt_equi_volume_steps=200,
     ):
         self.logger.info("Creating simulation")
         simulation = self.create_simulation(interchange)
@@ -122,3 +121,4 @@ class OpenMMSimulator:
         simulation.reporters.append(self.get_traj_reporter())
         simulation.reporters.append(self.get_dipole_reporter(interchange))
         simulation.step(nvt_prod_steps)
+        self.logger.info(f"Production simulation done")
