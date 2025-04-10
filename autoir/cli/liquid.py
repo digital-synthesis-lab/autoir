@@ -24,11 +24,11 @@ from autoir.openmm.simulator import DEFAULT_DIPOLES_FILE, OpenMMSimulator
     "--target_density", default=0.5, help="Target density when packing the molecules"
 )
 @click.option("--seed", default=12345, help="Random seed for the simulation")
-@click.option("--npt_equi_steps", default=50000, help="Number of equilibration steps")
-@click.option("--nvt_equi_steps", default=10000, help="Number of equilibration steps")
-@click.option("--nvt_prod_steps", default=100000, help="Number of production steps")
+@click.option("--npt_equi_steps", default=500_000, help="Number of equilibration steps")
+@click.option("--nvt_equi_steps", default=50_000, help="Number of equilibration steps")
+@click.option("--nvt_prod_steps", default=1_000_000, help="Number of production steps")
 @click.option(
-    "--trj_freq", default=1000, help="Number of steps for dumping the trajectory"
+    "--trj_freq", default=5000, help="Number of steps for dumping the trajectory"
 )
 def liquid_sim(
     smiles,
