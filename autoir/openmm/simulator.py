@@ -122,6 +122,7 @@ class OpenMMSimulator:
         if has_npt:
             self.logger.info(f"NPT equilibration for {npt_equi_steps} steps")
             simulation.step(npt_equi_steps)
+            del simulation.reporters[-1]
             deactivate_barostat(simulation)
             resize_box(simulation, log_file=self.equi_file, last_n=npt_equi_volume_steps)
 
