@@ -7,11 +7,12 @@ def resize_box(simulation, log_file: str = "data.csv", last_n: int = 2000):
     # load the data
     df = pd.read_csv(log_file)
     mean_vol = df.iloc[-last_n:]["Box Volume (nm^3)"].mean()
+    mean_density = df.iloc[-last_n:]["Density (g/mL)"].mean()
     mean_a = np.power(mean_vol, 1 / 3)
     lattice = np.eye(3) * mean_a
     simulation.context.setPeriodicBoxVectors(*lattice)
     simulation.context.reinitialize(True)
-    return simulation
+    return simulation, mean_vol, mean_density
 
 
 def deactivate_barostat(simulation):
