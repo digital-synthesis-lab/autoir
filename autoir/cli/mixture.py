@@ -11,6 +11,7 @@ from autoir.openmm.simulator import (
     DEFAULT_DIPOLES_FILE,
     DEFAULT_PROD_FILE,
     DEFAULT_EQUI_FILE,
+    DEFAULT_AVGE_FILE,
     OpenMMSimulator,
 )
 
@@ -102,7 +103,10 @@ def mixture_sim(
     prod = pd.read_csv(DEFAULT_PROD_FILE)
     prod = prod.iloc[len(prod) // 2:]
 
-    avg_E = prod['Potential Energy (kJ/mole)'].mean()
+    #avg_E = prod['Potential Energy (kJ/mole)'].mean()
+    # average enegy from every time step
+    avg_E = pd.read_csv(DEFAULT_AVGE_FILE)
+    avg_E = avg_E.iloc[-1]["avgE (kJ/mol)"]
 
     # computes and processes the infrared spectra
     df = process_file(DEFAULT_DIPOLES_FILE, out_file="ir.csv")

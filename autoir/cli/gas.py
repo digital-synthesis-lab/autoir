@@ -87,14 +87,13 @@ def gas_sim(
     prod = prod.iloc[len(prod) // 2 :]
 
     #avg_E = prod["Potential Energy (kJ/mole)"].mean()
+    # average enegy from every time step
+    avg_E = pd.read_csv(DEFAULT_AVGE_FILE)
+    avg_E = avg_E.iloc[-1]["avgE (kJ/mol)"]
 
     # computes and processes the infrared spectra
     df = process_file(DEFAULT_DIPOLES_FILE, out_file="ir.csv")
     wn, ir = smooth_ir(df)
-
-    # average enegy from every time step
-    avg_E = pd.read_csv(DEFAULT_AVGE_FILE)
-    avg_E = avg_E.iloc[-1]["avgE (kJ/mol)"]
 
     # Prepare parameters for reproducibility
     params = {
