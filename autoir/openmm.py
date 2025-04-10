@@ -108,6 +108,7 @@ class OpenMMSimulator:
         nvt_prod_steps=1_000_000,
         npt_equi_volume_steps=200,
     ):
+        self.logger.info("Creating simulation")
         simulation = self.get_simulation(interchange)
         self.logger.info("NPT equilibration")
         simulation.step(npt_equi_steps)
