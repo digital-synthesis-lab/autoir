@@ -6,7 +6,8 @@ from autoir.openmm.simulator import DEFAULT_DIPOLES_FILE
 
 from . import const
 
-DEFAULT_TRUNCATE = 20_000
+
+DEFAULT_TRUNCATE = 5_000
 
 
 def compute_autocorr(
@@ -67,7 +68,7 @@ def compute_spectra(autocorr, timestep, T=300):
 def get_spectra_from_file(
     inp_file: str = DEFAULT_DIPOLES_FILE, truncate_autocorr: int = DEFAULT_TRUNCATE
 ):
-    autocorr, timestep = compute_autocorr(inp_file)
+    autocorr, timestep = compute_autocorr(inp_file, truncate_autocorr)
     wavenums, spectra = compute_spectra(autocorr, timestep)
 
     df = pd.DataFrame({"w": wavenums, "IR": spectra})
@@ -79,5 +80,5 @@ def process_file(
     out_file: str = "ir.csv",
     truncate_autocorr: int = DEFAULT_TRUNCATE,
 ):
-    df = get_spectra_from_file(inp_file)
+    df = get_spectra_from_file(inp_file, truncate_autocorr)
     df.to_csv(out_file)
