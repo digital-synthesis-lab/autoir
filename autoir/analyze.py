@@ -1,12 +1,17 @@
-import pandas as pd
 import numpy as np
+import pandas as pd
 from scipy import fftpack, signal
 
-from . import const
 from autoir.openmm.simulator import DEFAULT_DIPOLES_FILE
 
+from . import const
 
-def compute_autocorr(filename: str = DEFAULT_DIPOLES_FILE, truncate_autocorr: int = 20000):
+DEFAULT_TRUNCATE = 20_000
+
+
+def compute_autocorr(
+    filename: str = DEFAULT_DIPOLES_FILE, truncate_autocorr: int = DEFAULT_TRUNCATE
+):
     # Load data
     time, mu_x, mu_y, mu_z = np.loadtxt(
         filename, skiprows=1, unpack=True, delimiter=","
@@ -59,7 +64,9 @@ def compute_spectra(autocorr, timestep, T=300):
     return wavenums, spectra_qm
 
 
-def get_spectra_from_file(inp_file: str = DEFAULT_DIPOLES_FILE):
+def get_spectra_from_file(
+    inp_file: str = DEFAULT_DIPOLES_FILE, truncate_autocorr: int = DEFAULT_TRUNCATE
+):
     autocorr, timestep = compute_autocorr(inp_file)
     wavenums, spectra = compute_spectra(autocorr, timestep)
 
@@ -67,6 +74,10 @@ def get_spectra_from_file(inp_file: str = DEFAULT_DIPOLES_FILE):
     return df
 
 
-def process_file(inp_file: str = DEFAULT_DIPOLES_FILE, out_file: str = "ir.csv"):
+def process_file(
+    inp_file: str = DEFAULT_DIPOLES_FILE,
+    out_file: str = "ir.csv",
+    truncate_autocorr: int = DEFAULT_TRUNCATE,
+):
     df = get_spectra_from_file(inp_file)
     df.to_csv(out_file)
