@@ -5,7 +5,7 @@ from openff.interchange import Interchange
 import openmm
 from openmm import unit
 
-from .reporters import DipoleReporter, FastDataReporter
+from .reporters import DipoleReporter, FastDataReporter, AverageEnergyReporter
 from .utils import deactivate_barostat, deactivate_data_reporters, resize_box
 
 DEFAULT_PROD_FILE = "prod.csv"
@@ -131,6 +131,7 @@ class OpenMMSimulator:
         deactivate_data_reporters(simulation)
         simulation.reporters.append(self.get_traj_reporter())
         simulation.reporters.append(self.get_dipole_reporter(interchange))
+        simulation.reporters.append(AverageEnergyReporter("avgE.csv", reportInterval=1))
         simulation.reporters.append(FastDataReporter(
             self.prod_file,
             reportInterval=self.log_freq,

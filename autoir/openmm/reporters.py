@@ -327,3 +327,119 @@ class FastDataReporter:
             self._writer = csv.writer(f)
             for line in self._results:
                 self._writer.writerow(line)
+
+
+class AverageEnergyReporter:
+    """StateDataReporter outputs information about a simulation, such as energy and temperature, to a file.
+
+    To use it, create a StateDataReporter, then add it to the Simulation's list of reporters.  The set of
+    data to write is configurable using boolean flags passed to the constructor.  By default the data is
+    written in comma-separated-value (CSV) format.
+    """
+
+    def __init__(
+        self,
+        file,
+        reportInterval,
+    ):
+        """Create a StateDataReporter.
+
+        Parameters
+        ----------
+        file : string or file
+            The file to write to, specified as a file name or file object
+        reportInterval : int
+            The interval (in time steps) at which to write frames
+        step : bool=False
+            Whether to write the current step index to the file
+        time : bool=False
+            Whether to write the current time to the file
+        potentialEnergy : bool=False
+            Whether to write the potential energy to the file
+        kineticEnergy : bool=False
+            Whether to write the kinetic energy to the file
+        totalEnergy : bool=False
+            Whether to write the total energy to the file
+        temperature : bool=False
+            Whether to write the instantaneous temperature to the file
+        volume : bool=False
+            Whether to write the periodic box volume to the file
+        density : bool=False
+            Whether to write the system density to the file
+        progress : bool=False
+            Whether to write current progress (percent completion) to the file.
+            If this is True, you must also specify totalSteps.
+        remainingTime : bool=False
+            Whether to write an estimate of the remaining clock time until
+            completion to the file.  If this is True, you must also specify
+            totalSteps.
+        speed : bool=False
+            Whether to write an estimate of the simulation speed in ns/day to
+            the file
+        elapsedTime : bool=False
+            Whether to write the elapsed time of the simulation in seconds to
+            the file.
+        systemMass : mass=None
+            The total mass to use for the system when reporting density.  If
+            this is None (the default), the system mass is computed by summing
+            the masses of all particles.  This parameter is useful when the
+            particle masses do not reflect their actual physical mass, such as
+            when some particles have had their masses set to 0 to immobilize
+            them.
+        totalSteps : int=None
+            The total number of steps that will be included in the simulation.
+            This is required if either progress or remainingTime is set to True,
+            and defines how many steps will indicate 100% completion.
+        append : bool=False
+            If true, append to an existing file.  This has two effects.  First,
+            the file is opened in append mode.  Second, the header line is not
+            written, since there is assumed to already be a header line at the
+            start of the file.
+        """
+        self._reportInterval = reportInterval
+        self._results = []
+        self.output = file
+        self._includes = ["energy"]
+        self._hasInitialized = False
+        self._n = None
+        self._avgE = None
+
+    def describeNextReport(self, simulation):
+        """Get information about the next report this object will generate.
+
+        Parameters
+        ----------
+        simulation : Simulation
+            The Simulation to generate a report for
+
+        Returns
+        -------
+        dict
+            A dictionary describing the required information for the next report
+        """
+        steps = self._reportInterval - simulation.currentStep % self._reportInterval
+        return {"steps": steps, "periodic": None, "include": self._includes}
+
+    def report(self, simulation, state):
+        """Generate a report.
+
+        Parameters
+        ----------
+        simulation : Simulation
+            The Simulation to generate a report for
+        state : State
+            The current state of the simulation
+        """
+        if not self._hasInitialized:
+            self._n = 1
+            self._avgE = state.getPotentialEnergy().value_in_unit(unit.kilojoules_per_mole)
+            self._hasInitialized = True
+
+        newE = state.getPotentialEnergy().value_in_unit(unit.kilojoules_per_mole)
+        self._avgE = (self._avgE * self._n + newE) / (self._n + 1)
+        self._n = self._n + 1
+
+    def __del__(self):
+        with open(self.output, "w", newline="") as f:
+            f.write("n_points,avgE (kJ/mol)\n")
+            f.write(f"{self._n},{self._avgE:.8f}")
