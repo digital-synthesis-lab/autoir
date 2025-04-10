@@ -1,6 +1,7 @@
 import json
 import os
 import uuid
+import pandas as pd
 
 import click
 from autoir.analyze import process_file
