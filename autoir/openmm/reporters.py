@@ -1,6 +1,7 @@
 import csv
 import numpy as np
 from openff.interchange import Interchange
+from openmm import unit
 
 
 class DipoleReporter:
@@ -19,7 +20,7 @@ class DipoleReporter:
             atom_idx = key.atom_indices[0]  # TopologyKey holds a tuple like (i,)
             self._charges[atom_idx] = value.m
 
-    def describe_next_report(self, simulation):
+    def describeNextReport(self, simulation):
         steps = self._report_interval - simulation.currentStep % self._report_interval
         return (steps, True, False, False, False)
 

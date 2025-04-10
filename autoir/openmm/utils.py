@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import openmm
 
 
 def resize_box(simulation, log_file: str = "data.csv", last_n: int = 100):

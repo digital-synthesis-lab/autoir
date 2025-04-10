@@ -1,3 +1,4 @@
+import logging
 from openff.interchange import Interchange
 
 import openmm
@@ -96,7 +97,7 @@ class OpenMMSimulator:
 
     def get_dipole_reporter(self, interchange: Interchange):
         return DipoleReporter(
-            self.dipoles_file, reportInterval=1, interchange=interchange
+            self.dipole_file, report_interval=1, interchange=interchange
         )
 
     def run(
@@ -108,16 +109,16 @@ class OpenMMSimulator:
         npt_equi_volume_steps=200,
     ):
         self.logger.info("Creating simulation")
-        simulation = self.get_simulation(interchange)
-        self.logger.info("NPT equilibration")
+        simulation = self.create_simulation(interchange)
+        self.logger.info(f"NPT equilibration for {npt_equi_steps} steps")
         simulation.step(npt_equi_steps)
 
-        self.logger.info("NVT equilibration")
+        self.logger.info(f"NVT equilibration for {nvt_equi_steps} steps")
         deactivate_barostat(simulation)
         resize_box(simulation, log_file=self.log_file, last_n=npt_equi_volume_steps)
         simulation.step(nvt_equi_steps)
 
-        self.logger.info("NVT Production")
+        self.logger.info(f"NVT production for {nvt_prod_steps} steps")
         simulation.reporters.append(self.get_traj_reporter())
-        simulation.reporters.append(self.get_dipole_reporter())
+        simulation.reporters.append(self.get_dipole_reporter(interchange))
         simulation.step(nvt_prod_steps)
