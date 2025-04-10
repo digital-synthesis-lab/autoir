@@ -20,7 +20,7 @@ from autoir.openmm.simulator import DEFAULT_DIPOLES_FILE, OpenMMSimulator
 @click.option(
     "--trj_freq", default=10_000, help="Number of steps for dumping the trajectory"
 )
-def liquid_sim(
+def gas_sim(
     smiles,
     output,
     time_step,
@@ -51,7 +51,7 @@ def liquid_sim(
     sim = OpenMMSimulator(
         time_step=time_step,
         temperature=temperature,
-        pressure=pressure,
+        pressure=0.0,
         trj_freq=trj_freq,
     )
 
