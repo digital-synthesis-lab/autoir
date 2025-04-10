@@ -1,39 +1,71 @@
 import json
-import click
-import uuid
 import os
-from autoir.create import mix_simulation, DEFAULT_NUM_MOLS
-from autoir.render import render_input_file, write_input_file
+import uuid
+
+import click
+from autoir.analyze import process_file
+from autoir.create import DEFAULT_NUM_MOLS, mix_simulation
+from autoir.openmm.simulator import DEFAULT_DIPOLES_FILE, OpenMMSimulator
 
 
-@click.command("mixture")
+@click.command("liquid")
 @click.argument("smiles_1")
 @click.argument("smiles_2")
 @click.option("-o", "--output", default=None, help="Output directory")
-@click.option("-n", "--n_mols", default=DEFAULT_NUM_MOLS, help="Number of molecules inside the box")
+@click.option(
+    "-n",
+    "--n_mols",
+    default=DEFAULT_NUM_MOLS,
+    help="Number of molecules inside the box",
+)
 @click.option("--ratio", default=0.5, help="Ratio between 1 and 2")
+@click.option("--time_step", default=2, help="Simulation temperature in K")
 @click.option("--temperature", default=300, help="Simulation temperature in K")
 @click.option("--pressure", default=1.0, help="Simulation pressure in atm")
+@click.option(
+    "--target_density", default=0.5, help="Target density when packing the molecules"
+)
 @click.option("--seed", default=12345, help="Random seed for the simulation")
-@click.option("--equi_steps", default=50000, help="Number of equilibration steps")
-@click.option("--prod_steps", default=100000, help="Number of production steps")
+@click.option("--npt_equi_steps", default=500_000, help="Number of equilibration steps")
+@click.option("--nvt_equi_steps", default=50_000, help="Number of equilibration steps")
+@click.option("--nvt_prod_steps", default=1_000_000, help="Number of production steps")
+@click.option(
+    "--trj_freq", default=10_000, help="Number of steps for dumping the trajectory"
+)
 def mixture_sim(
-    smiles_1, smiles_2, output, n_mols, ratio, temperature, pressure, seed, equi_steps, prod_steps
+    smiles_1,
+    smiles_2,
+    output,
+    n_mols,
+    ratio,
+    time_step,
+    temperature,
+    pressure,
+    target_density,
+    seed,
+    npt_equi_steps,
+    nvt_equi_steps,
+    nvt_prod_steps,
+    trj_freq,
 ):
-    """Run a liquid phase simulation of a binary molecular mixture for the given SMILES strings."""
+    """Run a liquid phase simulation of a mixture for the given SMILES strings."""
     sim_id = str(uuid.uuid4())
 
     if output is not None:
         sim_dir = output
-    else: 
+    else:
         sim_dir = os.path.join(os.getcwd(), sim_id)
+
     os.makedirs(sim_dir, exist_ok=True)
 
     # Change to the simulation directory
     os.chdir(sim_dir)
 
+    click.echo("Creating mixture box")
     # Generate LAMMPS data file and header
-    mix_simulation(smiles_1, smiles_2, ratio=ratio, n_mols=n_mols)
+    topology, interchange = mix_simulation(
+        smiles, n_mols=n_mols, target_density=target_density
+    )
 
     # Prepare parameters for the main input file
     params = {
@@ -45,16 +77,29 @@ def mixture_sim(
         "temperature": temperature,
         "pressure": pressure,
         "seed": seed,
-        "equi_steps": equi_steps,
-        "prod_steps": prod_steps,
-        "dump_freq": None,
+        "npt_equi_steps": npt_equi_steps,
+        "nvt_equi_steps": nvt_equi_steps,
+        "nvt_prod_steps": nvt_prod_steps,
+        "trj_freq": trj_freq,
         "phase": "mixture",
     }
 
-    # Render and write the main input file
-    write_input_file(params, "mixture.in")
+    sim = OpenMMSimulator(
+        time_step=time_step,
+        temperature=temperature,
+        pressure=pressure,
+        trj_freq=trj_freq,
+    )
+
+    sim.run(
+        interchange,
+        npt_equi_steps=npt_equi_steps,
+        nvt_equi_steps=nvt_equi_steps,
+        nvt_prod_steps=nvt_prod_steps,
+    )
+
+    click.echo("Processing and saving file")
+    process_file(DEFAULT_DIPOLES_FILE, out_file="ir.csv")
 
     with open("job.json", "w") as f:
         json.dump(params, f)
-
-    click.echo(f"Liquid phase simulation files created in directory: {sim_dir}")
