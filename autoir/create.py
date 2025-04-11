@@ -9,19 +9,25 @@ from openff.interchange.components._packmol import (
 from openff.interchange.components.mdconfig import MDConfig
 from openff.toolkit import ForceField, Molecule, Topology, unit
 from rdkit.Chem import AllChem as Chem
+from rdkit.Chem import Descriptors
+from . import const
 
 DEFAULT_FF = "openff_unconstrained-2.0.0.offxml"
 DEFAULT_BOX_SIZE_GAS = 4.0  # nm for gas phase
-DEFAULT_BOX_SIZE_LIQ = 2.6  # nm for liq phase
-DEFAULT_NUM_MOLS = 100
+DEFAULT_DENSITY = 0.5  # g/cm3
+DEFAULT_NUM_MOLS = 80
 
 
-def estimate_box_size(smiles: str, n_mols: int = DEFAULT_NUM_MOLS, scaling: float = 0.01):
-    mol = Chem.AddHs(Chem.MolFromSmiles(smiles))
-    Chem.EmbedMolecule(mol)
-    vol = Chem.ComputeMolVolume(mol)
-    total_vol = n_mols * scaling * vol
-    size = total_vol ** (1 / 3)
+def estimate_box_size(
+    smiles: str, n_mols: int = DEFAULT_NUM_MOLS, target_density: float = DEFAULT_DENSITY
+):
+    """Estimates the box size to obtain a targeted density (in g/cm3)"""
+    mol = Chem.MolFromSmiles(smiles)
+    mass = Descriptors.ExactMolWt(mol)  # g/mol
+    box_mass = (mass / const.N_AVOGADRO) * n_mols  # g
+    box_vol = box_mass / target_density  # cm^3
+    box_vol = box_vol * 1e21  # nm^3
+    size = box_vol ** (1 / 3)
     return size
 
 
@@ -34,9 +40,9 @@ def topology_gas(mol: Molecule) -> Topology:
 
 def topology_single_liquid(
     mol: Molecule,
+    box_size: float,
     n_mols: int = DEFAULT_NUM_MOLS,
-    box_size: float = DEFAULT_BOX_SIZE_LIQ,
-) -> Topology:
+):
     topology = pack_box(
         molecules=[mol],
         number_of_copies=[n_mols],
@@ -49,10 +55,10 @@ def topology_single_liquid(
 def topology_binary(
     mol1: Molecule,
     mol2: Molecule,
+    box_size: float,
     ratio: float = 0.5,
     n_mols: List[int] = 200,
-    box_size: float = DEFAULT_BOX_SIZE_LIQ,
-) -> Topology:
+):
     topology = pack_box(
         molecules=[mol1, mol2],
         number_of_copies=[round(n_mols * ratio), round(n_mols * (1 - ratio))],
@@ -70,48 +76,45 @@ def gas_simulation(smiles, box_size: float = DEFAULT_BOX_SIZE_GAS):
         force_field=ff, topology=topology
     )
     interchange.box = unit.Quantity([box_size] * 3, unit.nanometer)
-    interchange.to_lammps("out.lmp")
-    mdconfig = MDConfig.from_interchange(interchange)
-    mdconfig.write_lammps_input(input_file="header.in", interchange=interchange)
-    return mol, topology
+    return topology, interchange
 
 
-def liq_simulation(smiles, n_mols: int = DEFAULT_NUM_MOLS, box_size: float = None, **kwargs):
+def liq_simulation(
+    smiles,
+    n_mols: int = DEFAULT_NUM_MOLS,
+    target_density: float = DEFAULT_DENSITY,
+    **kwargs,
+):
     mol = Molecule.from_smiles(smiles, allow_undefined_stereo=True)
 
-    if box_size is None:
-        box_size = estimate_box_size(smiles, n_mols=n_mols, **kwargs)
-    else:
-        box_size = float(box_size)
+    box_size = estimate_box_size(smiles, n_mols=n_mols, target_density=target_density)
 
     topology = topology_single_liquid(mol, box_size=box_size, n_mols=n_mols)
     ff = ForceField(DEFAULT_FF)
     interchange: Interchange = Interchange.from_smirnoff(
         force_field=ff, topology=topology
     )
-    interchange.to_lammps("out.lmp")
-    mdconfig = MDConfig.from_interchange(interchange)
-    mdconfig.write_lammps_input(input_file="header.in", interchange=interchange)
     return topology, interchange
 
 
 def mix_simulation(
-    smiles1, smiles2, ratio: float = 0.5, n_mols: int = DEFAULT_NUM_MOLS, **kwargs
+    smiles1,
+    smiles2,
+    ratio: float = 0.5,
+    n_mols: int = DEFAULT_NUM_MOLS,
+    target_density: float = DEFAULT_DENSITY,
 ):
     mol1 = Molecule.from_smiles(smiles1, allow_undefined_stereo=True)
     mol2 = Molecule.from_smiles(smiles2, allow_undefined_stereo=True)
 
     # estimates the size of the box given the number of heavy atoms
-    box_size = (
-        estimate_box_size(smiles1, n_mols=n_mols, **kwargs) + estimate_box_size(smiles2, n_mols=n_mols, **kwargs)
-    ) / 2
+    box1 = estimate_box_size(smiles1, n_mols=n_mols, target_density=target_density)
+    box2 = estimate_box_size(smiles2, n_mols=n_mols, target_density=target_density)
+    box_size = box1 * ratio + box2 * (1 - ratio)
 
-    topology = topology_binary(mol1, mol2, ratio, n_mols=n_mols, box_size=box_size)
+    topology = topology_binary(mol1, mol2, ratio=ratio, n_mols=n_mols, box_size=box_size)
     ff = ForceField(DEFAULT_FF)
     interchange: Interchange = Interchange.from_smirnoff(
         force_field=ff, topology=topology
     )
-    interchange.to_lammps("out.lmp")
-    mdconfig = MDConfig.from_interchange(interchange)
-    mdconfig.write_lammps_input(input_file="header.in", interchange=interchange)
     return topology, interchange
