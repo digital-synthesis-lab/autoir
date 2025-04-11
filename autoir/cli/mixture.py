@@ -35,8 +35,8 @@ from autoir.openmm.simulator import (
 )
 @click.option("--seed", default=12345, help="Random seed for the simulation")
 @click.option("--npt_equi_steps", default=500_000, help="Number of equilibration steps")
-@click.option("--nvt_equi_steps", default=50_000, help="Number of equilibration steps")
-@click.option("--nvt_prod_steps", default=1_000_000, help="Number of production steps")
+@click.option("--nvt_equi_steps", default=100_000, help="Number of equilibration steps")
+@click.option("--nvt_prod_steps", default=500_000, help="Number of production steps")
 @click.option(
     "--trj_freq", default=10_000, help="Number of steps for dumping the trajectory"
 )
