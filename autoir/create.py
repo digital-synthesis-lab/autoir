@@ -31,7 +31,7 @@ def estimate_box_size(
     return size
 
 
-def topology_gas(mol: Molecule):
+def topology_gas(mol: Molecule) -> Topology:
     mol.generate_conformers(n_conformers=1, rms_cutoff=0.1 * unit.angstrom),
     topology = mol.to_topology()
 
