@@ -2,3 +2,4 @@
 kB = 1.38064852e-23  # m^2 kg s^-2 K^-1
 LIGHTSPEED = 299792458.0  # m s^-1
 HBAR = 1.05457180013e-34  # kg m^2 s^-1
+N_AVOGADRO = 6.02214076e23

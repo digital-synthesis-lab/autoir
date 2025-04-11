@@ -10,12 +10,12 @@ from openff.interchange.components.mdconfig import MDConfig
 from openff.toolkit import ForceField, Molecule, Topology, unit
 from rdkit.Chem import AllChem as Chem
 from rdkit.Chem import Descriptors
+from . import const
 
 DEFAULT_FF = "openff_unconstrained-2.0.0.offxml"
 DEFAULT_BOX_SIZE_GAS = 4.0  # nm for gas phase
 DEFAULT_DENSITY = 0.5  # g/cm3
 DEFAULT_NUM_MOLS = 80
-N_AVOGADRO = 6.02214076e23
 
 
 def estimate_box_size(
@@ -24,7 +24,7 @@ def estimate_box_size(
     """Estimates the box size to obtain a targeted density (in g/cm3)"""
     mol = Chem.MolFromSmiles(smiles)
     mass = Descriptors.ExactMolWt(mol)  # g/mol
-    box_mass = (mass / N_AVOGADRO) * n_mols  # g
+    box_mass = (mass / const.N_AVOGADRO) * n_mols  # g
     box_vol = box_mass / target_density  # cm^3
     box_vol = box_vol * 1e21  # nm^3
     size = box_vol ** (1 / 3)
