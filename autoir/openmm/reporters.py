@@ -22,7 +22,8 @@ class DipoleReporter:
 
     def describeNextReport(self, simulation):
         steps = self._reportInterval - simulation.currentStep % self._reportInterval
-        return {'steps': steps, 'periodic': True, 'include':['positions']}
+        # return {'steps': steps, 'periodic': True, 'include':['positions']}
+        return (steps, True,True,True, True)
 
     def report(self, simulation, state):
         positions = state.getPositions(asNumpy=True)._value * 10  # Å
@@ -174,7 +175,9 @@ class FastDataReporter:
             A dictionary describing the required information for the next report
         """
         steps = self._reportInterval - simulation.currentStep % self._reportInterval
-        return {"steps": steps, "periodic": None, "include": self._includes}
+
+        # return {"steps": steps, "periodic": None, "include": self._includes}
+        return (steps, True,True,True, True)
 
     def report(self, simulation, state):
         """Generate a report.
@@ -420,7 +423,9 @@ class AverageEnergyReporter:
             A dictionary describing the required information for the next report
         """
         steps = self._reportInterval - simulation.currentStep % self._reportInterval + max(0, self._startingStep - simulation.currentStep)
-        return {"steps": steps, "periodic": None, "include": self._includes}
+        # return {"steps": steps, "periodic": None, "include": self._includes}
+        return (steps, True,True,True, True)
+
 
     def report(self, simulation, state):
         """Generate a report.
