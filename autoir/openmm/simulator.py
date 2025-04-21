@@ -5,7 +5,7 @@ from openff.interchange import Interchange
 import openmm
 from openmm import unit
 
-from .reporters import DipoleReporter, FastDataReporter, AverageEnergyReporter
+from .reporters import AverageEnergyReporter, DipoleReporter, FastDataReporter
 from .utils import deactivate_barostat, deactivate_data_reporters, resize_box
 
 DEFAULT_PROD_FILE = "prod.csv"
@@ -108,23 +108,29 @@ class OpenMMSimulator:
         has_npt = npt_equi_steps > 0
         simulation = self.create_simulation(interchange, barostat=has_npt)
         simulation.minimizeEnergy(maxIterations=100)
-        simulation.reporters.append(FastDataReporter(
-            self.equi_file,
-            reportInterval=self.log_freq,
-            step=True,
-            time=True,
-            potentialEnergy=True,
-            temperature=True,
-            density=True,
-            volume=True,
-        ))
+        simulation.reporters.append(
+            FastDataReporter(
+                self.equi_file,
+                reportInterval=self.log_freq,
+                step=True,
+                time=True,
+                potentialEnergy=True,
+                temperature=True,
+                density=True,
+                volume=True,
+            )
+        )
 
         if has_npt:
             self.logger.info(f"NPT equilibration for {npt_equi_steps} steps")
             simulation.step(npt_equi_steps)
             del simulation.reporters[-1]
             deactivate_barostat(simulation)
-            resize_box(simulation, log_file=self.equi_file, last_n=npt_equi_volume_steps)
+            resize_box(
+                simulation, log_file=self.equi_file, last_n=npt_equi_volume_steps
+            )
+            state = simulation.context.getState()
+            simulation.topology.setPeriodicBoxVectors(state.getPeriodicBoxVectors())
 
         self.logger.info(f"NVT equilibration for {nvt_equi_steps} steps")
         simulation.step(nvt_equi_steps)
@@ -133,17 +139,23 @@ class OpenMMSimulator:
         deactivate_data_reporters(simulation)
         simulation.reporters.append(self.get_traj_reporter())
         simulation.reporters.append(self.get_dipole_reporter(interchange))
-        simulation.reporters.append(AverageEnergyReporter("avgE.csv", reportInterval=1, startingStep=nvt_prod_steps // 2))
-        simulation.reporters.append(FastDataReporter(
-            self.prod_file,
-            reportInterval=self.log_freq,
-            step=True,
-            time=True,
-            potentialEnergy=True,
-            temperature=False,
-            density=False,
-            volume=False,
-        ))
+        simulation.reporters.append(
+            AverageEnergyReporter(
+                "avgE.csv", reportInterval=1, startingStep=nvt_prod_steps // 2
+            )
+        )
+        simulation.reporters.append(
+            FastDataReporter(
+                self.prod_file,
+                reportInterval=self.log_freq,
+                step=True,
+                time=True,
+                potentialEnergy=True,
+                temperature=False,
+                density=False,
+                volume=False,
+            )
+        )
         simulation.step(nvt_prod_steps)
 
         self.logger.info(f"Production simulation done")
