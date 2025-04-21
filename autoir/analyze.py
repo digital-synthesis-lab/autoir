@@ -85,7 +85,7 @@ def process_file(
     return df
 
 
-def smooth_ir(df: pd.DataFrame, wn_min: int=400, wn_max: int=4000, wn_resolution: int = 4, sigma: float = 1):
+def smooth_ir(df: pd.DataFrame, wn_min: int=0, wn_max: int=5000, wn_resolution: int = 4, sigma: float = 1):
     from scipy import interpolate
     from scipy.ndimage import gaussian_filter1d
 

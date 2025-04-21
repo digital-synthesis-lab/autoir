@@ -165,8 +165,11 @@ def _mixture_sim(
         "avg_energy": avg_E,
         "avg_density": avg_D,
         "avg_volume": avg_V,
+        "wn": wn.tolist(),
         "ir": ir.tolist(),
     }
 
     with open("job.json", "w") as f:
         json.dump(params, f)
+
+    return params
