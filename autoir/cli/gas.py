@@ -1,19 +1,19 @@
 import json
 import os
 import uuid
-import pandas as pd
 
 import click
+import pandas as pd
 from autoir.analyze import process_file, smooth_ir
-from autoir.timer import Timer
 from autoir.create import gas_simulation
 from autoir.openmm.simulator import (
-    DEFAULT_DIPOLES_FILE,
-    DEFAULT_PROD_FILE,
-    DEFAULT_EQUI_FILE,
     DEFAULT_AVGE_FILE,
+    DEFAULT_DIPOLES_FILE,
+    DEFAULT_EQUI_FILE,
+    DEFAULT_PROD_FILE,
     OpenMMSimulator,
 )
+from autoir.timer import Timer
 
 
 @click.command("gas")
@@ -32,6 +32,28 @@ from autoir.openmm.simulator import (
     "--trj_freq", default=10_000, help="Number of steps for dumping the trajectory"
 )
 def gas_sim(
+    smiles,
+    output,
+    time_step,
+    temperature,
+    seed,
+    nvt_equi_steps,
+    nvt_prod_steps,
+    trj_freq,
+):
+    return _gas_sim(
+        smiles,
+        output,
+        time_step,
+        temperature,
+        seed,
+        nvt_equi_steps,
+        nvt_prod_steps,
+        trj_freq,
+    )
+
+
+def _gas_sim(
     smiles,
     output,
     time_step,
@@ -86,7 +108,7 @@ def gas_sim(
     prod = pd.read_csv(DEFAULT_PROD_FILE)
     prod = prod.iloc[len(prod) // 2 :]
 
-    #avg_E = prod["Potential Energy (kJ/mole)"].mean()
+    # avg_E = prod["Potential Energy (kJ/mole)"].mean()
     # average enegy from every time step
     avg_E = pd.read_csv(DEFAULT_AVGE_FILE)
     avg_E = avg_E.iloc[-1]["avgE (kJ/mol)"]

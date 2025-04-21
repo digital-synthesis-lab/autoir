@@ -56,6 +56,40 @@ def mixture_sim(
     nvt_prod_steps,
     trj_freq,
 ):
+    return _mixture_sim(
+        smiles_1,
+        smiles_2,
+        output,
+        n_mols,
+        ratio,
+        time_step,
+        temperature,
+        pressure,
+        target_density,
+        seed,
+        npt_equi_steps,
+        nvt_equi_steps,
+        nvt_prod_steps,
+        trj_freq,
+    )
+
+
+def _mixture_sim(
+    smiles_1,
+    smiles_2,
+    output,
+    n_mols,
+    ratio,
+    time_step,
+    temperature,
+    pressure,
+    target_density,
+    seed,
+    npt_equi_steps,
+    nvt_equi_steps,
+    nvt_prod_steps,
+    trj_freq,
+):
     """Run a liquid phase simulation of a mixture for the given SMILES strings."""
     sim_id = str(uuid.uuid4())
 
@@ -101,9 +135,9 @@ def mixture_sim(
 
     # uses the last half of the production simulation
     prod = pd.read_csv(DEFAULT_PROD_FILE)
-    prod = prod.iloc[len(prod) // 2:]
+    prod = prod.iloc[len(prod) // 2 :]
 
-    #avg_E = prod['Potential Energy (kJ/mole)'].mean()
+    # avg_E = prod['Potential Energy (kJ/mole)'].mean()
     # average enegy from every time step
     avg_E = pd.read_csv(DEFAULT_AVGE_FILE)
     avg_E = avg_E.iloc[-1]["avgE (kJ/mol)"]
@@ -131,7 +165,7 @@ def mixture_sim(
         "avg_energy": avg_E,
         "avg_density": avg_D,
         "avg_volume": avg_V,
-        "ir": ir.tolist()
+        "ir": ir.tolist(),
     }
 
     with open("job.json", "w") as f:

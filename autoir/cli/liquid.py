@@ -52,6 +52,36 @@ def liquid_sim(
     nvt_prod_steps,
     trj_freq,
 ):
+    return _liquid_sim(
+        smiles,
+        output,
+        n_mols,
+        time_step,
+        temperature,
+        pressure,
+        target_density,
+        seed,
+        npt_equi_steps,
+        nvt_equi_steps,
+        nvt_prod_steps,
+        trj_freq,
+    )
+
+
+def _liquid_sim(
+    smiles,
+    output,
+    n_mols,
+    time_step,
+    temperature,
+    pressure,
+    target_density,
+    seed,
+    npt_equi_steps,
+    nvt_equi_steps,
+    nvt_prod_steps,
+    trj_freq,
+):
     """Run a liquid phase simulation for the given SMILES string."""
     sim_id = str(uuid.uuid4())
 
@@ -99,7 +129,6 @@ def liquid_sim(
     prod = pd.read_csv(DEFAULT_PROD_FILE)
     prod = prod.iloc[len(prod) // 2:]
 
-    #avg_E = prod['Potential Energy (kJ/mole)'].mean()
     # average enegy from every time step
     avg_E = pd.read_csv(DEFAULT_AVGE_FILE)
     avg_E = avg_E.iloc[-1]["avgE (kJ/mol)"]
