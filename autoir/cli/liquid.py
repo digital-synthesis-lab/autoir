@@ -151,12 +151,12 @@ def _liquid_sim(
         "nvt_prod_steps": nvt_prod_steps,
         "trj_freq": trj_freq,
         "phase": "liquid",
-        "runtime": runtime,
-        "avg_energy": avg_E,
-        "avg_density": avg_D,
-        "avg_volume": avg_V,
-        "wn": wn.tolist(),
-        "ir": ir.tolist(),
+        "runtime": float(runtime),
+        "avg_energy": float(avg_E),
+        "avg_density": float(avg_D),
+        "avg_volume": float(avg_V),
+        "wn": [float(w) for w in wn],
+        "ir": [float(i) for i in ir],
     }
 
     with open("job.json", "w") as f:
