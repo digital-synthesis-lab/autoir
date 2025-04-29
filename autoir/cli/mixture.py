@@ -161,6 +161,7 @@ def _mixture_sim(
         "nvt_prod_steps": nvt_prod_steps,
         "trj_freq": trj_freq,
         "phase": "mixture",
+        "runtime": float(runtime),
         "avg_energy": float(avg_E),
         "avg_density": float(avg_D),
         "avg_volume": float(avg_V),
