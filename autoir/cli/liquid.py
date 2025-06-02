@@ -25,9 +25,9 @@ from autoir.openmm.simulator import (
     default=DEFAULT_NUM_MOLS,
     help="Number of molecules inside the box",
 )
-@click.option("--time_step", default=2, help="Simulation temperature in K")
-@click.option("--temperature", default=300, help="Simulation temperature in K")
-@click.option("--pressure", default=1.0, help="Simulation pressure in atm")
+@click.option("--time_step", default=2, type=float, help="Time step (in fs)")
+@click.option("--temperature", default=300, help="Simulation temperature (in K)")
+@click.option("--pressure", default=1.0, help="Simulation pressure (in atm)")
 @click.option(
     "--target_density", default=0.5, help="Target density when packing the molecules"
 )
