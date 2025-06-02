@@ -157,6 +157,7 @@ def _liquid_sim(
         "nvt_equi_steps": nvt_equi_steps,
         "nvt_prod_steps": nvt_prod_steps,
         "trj_freq": trj_freq,
+        "platform": platform,
         "phase": "liquid",
         "runtime": float(runtime),
         "avg_energy": float(avg_E),

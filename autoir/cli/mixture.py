@@ -40,6 +40,9 @@ from autoir.openmm.simulator import (
 @click.option(
     "--trj_freq", default=10_000, help="Number of steps for dumping the trajectory"
 )
+@click.option(
+    "--platform", default=None, type=str, help="Platform where to compute the simulation"
+)
 def mixture_sim(
     smiles_1,
     smiles_2,
@@ -55,6 +58,7 @@ def mixture_sim(
     nvt_equi_steps,
     nvt_prod_steps,
     trj_freq,
+    platform,
 ):
     return _mixture_sim(
         smiles_1,
@@ -71,6 +75,7 @@ def mixture_sim(
         nvt_equi_steps,
         nvt_prod_steps,
         trj_freq,
+        platform,
     )
 
 
@@ -89,6 +94,7 @@ def _mixture_sim(
     nvt_equi_steps,
     nvt_prod_steps,
     trj_freq,
+    platform=None
 ):
     """Run a liquid phase simulation of a mixture for the given SMILES strings."""
     sim_id = str(uuid.uuid4())
@@ -115,6 +121,7 @@ def _mixture_sim(
         temperature=temperature,
         pressure=pressure,
         trj_freq=trj_freq,
+        platform=platform,
     )
 
     with Timer() as t:
@@ -160,6 +167,7 @@ def _mixture_sim(
         "nvt_equi_steps": nvt_equi_steps,
         "nvt_prod_steps": nvt_prod_steps,
         "trj_freq": trj_freq,
+        "platform": platform,
         "phase": "mixture",
         "runtime": float(runtime),
         "avg_energy": float(avg_E),
