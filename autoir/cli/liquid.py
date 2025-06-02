@@ -38,6 +38,9 @@ from autoir.openmm.simulator import (
 @click.option(
     "--trj_freq", default=10_000, help="Number of steps for dumping the trajectory"
 )
+@click.option(
+    "--platform", default=None, type=str, help="Platform where to compute the simulation"
+)
 def liquid_sim(
     smiles,
     output,
@@ -51,6 +54,7 @@ def liquid_sim(
     nvt_equi_steps,
     nvt_prod_steps,
     trj_freq,
+    platform,
 ):
     return _liquid_sim(
         smiles,
@@ -65,6 +69,7 @@ def liquid_sim(
         nvt_equi_steps,
         nvt_prod_steps,
         trj_freq,
+        platform,
     )
 
 
@@ -81,6 +86,7 @@ def _liquid_sim(
     nvt_equi_steps,
     nvt_prod_steps,
     trj_freq,
+    platform=None,
 ):
     """Run a liquid phase simulation for the given SMILES string."""
     sim_id = str(uuid.uuid4())
@@ -107,6 +113,7 @@ def _liquid_sim(
         temperature=temperature,
         pressure=pressure,
         trj_freq=trj_freq,
+        platform=platform,
     )
 
     with Timer() as t:
