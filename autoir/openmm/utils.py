@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import pandas as pd
 import openmm
@@ -39,3 +40,15 @@ def deactivate_data_reporters(simulation):
         simulation.reporters.pop(i)
 
     return simulation
+
+
+def get_default_platform_props(platform: str) -> dict:
+    if platform.lower() == "cuda":
+        devices = os.environ.get("CUDA_VISIBLE_DEVICES", None)
+        if devices is None:
+            return {}
+
+        return {
+            "DeviceIndex": devices,
+        }
+

@@ -1,12 +1,14 @@
+import os
 import logging
 
 from openff.interchange import Interchange
 
 import openmm
 from openmm import unit
+from openmm.openmm import Platform
 
 from .reporters import AverageEnergyReporter, DipoleReporter, FastDataReporter
-from .utils import deactivate_barostat, deactivate_data_reporters, resize_box
+from .utils import deactivate_barostat, deactivate_data_reporters, resize_box, get_default_platform_props
 
 DEFAULT_PROD_FILE = "prod.csv"
 DEFAULT_EQUI_FILE = "equi.csv"
@@ -37,6 +39,8 @@ class OpenMMSimulator:
         equi_file: str = DEFAULT_EQUI_FILE,
         prod_file: str = DEFAULT_PROD_FILE,
         dipole_file: str = DEFAULT_DIPOLES_FILE,
+        platform: str = None,
+        platform_props: dict = None,
     ):
         self.time_step = time_step * unit.femtoseconds  # simulation timestep
         self.temperature = temperature * unit.kelvin  # simulation temperature
@@ -51,6 +55,15 @@ class OpenMMSimulator:
         self.equi_file = equi_file
         self.prod_file = prod_file
         self.dipole_file = dipole_file
+
+        self.platform = platform
+        if type(platform_props) == dict:
+            self.platform_props = {
+                **get_default_platform_props(platform),
+                **platform_props,
+            }
+        else:
+            self.platform_props = get_default_platform_props(platform)
 
         self.logger = self.get_logger()
 
@@ -67,7 +80,12 @@ class OpenMMSimulator:
         return logger
 
     def create_simulation(self, interchange: Interchange, barostat: bool = True):
-        simulation = interchange.to_openmm_simulation(self.get_integrator())
+        if self.platform is None:
+            simulation = interchange.to_openmm_simulation(self.get_integrator())
+        elif type(self.platform) != str:
+            raise ValueError(f"Argument platform {platform} is not string")
+        else:
+            simulation = interchange.to_openmm_simulation(self.get_integrator(), platformProperties=self.platform_props, platform=Platform.getPlatformByName(self.platform))
 
         if barostat:
             simulation.system.addForce(self.get_barostat())
