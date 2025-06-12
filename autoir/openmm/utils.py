@@ -43,6 +43,9 @@ def deactivate_data_reporters(simulation):
 
 
 def get_default_platform_props(platform: str) -> dict:
+    if platform is None:
+        return {}
+
     if platform.lower() == "cuda":
         devices = os.environ.get("CUDA_VISIBLE_DEVICES", None)
         if devices is None:
