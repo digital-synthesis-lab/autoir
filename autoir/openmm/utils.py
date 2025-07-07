@@ -54,4 +54,3 @@ def get_default_platform_props(platform: str) -> dict:
         return {
             "DeviceIndex": devices,
         }
-

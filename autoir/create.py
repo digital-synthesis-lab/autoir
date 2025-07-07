@@ -1,15 +1,11 @@
 from typing import List
 
 from openff.interchange import Interchange
-from openff.interchange.components._packmol import (
-    RHOMBIC_DODECAHEDRON,
-    UNIT_CUBE,
-    pack_box,
-)
-from openff.interchange.components.mdconfig import MDConfig
+from openff.interchange.components._packmol import UNIT_CUBE, pack_box
 from openff.toolkit import ForceField, Molecule, Topology, unit
 from rdkit.Chem import AllChem as Chem
 from rdkit.Chem import Descriptors
+
 from . import const
 
 DEFAULT_FF = "openff_unconstrained-2.0.0.offxml"
@@ -68,6 +64,23 @@ def topology_binary(
     return topology
 
 
+def topology_n_mols(
+    mol_list: List[Molecule],
+    ratio_list: List[float],
+    box_size: float,
+    n_mols: List[int] = 200,
+):
+    copies = [round(n_mols * ratio) for ratio in ratio_list]
+
+    topology = pack_box(
+        molecules=mol_list,
+        number_of_copies=copies,
+        box_vectors=box_size * UNIT_CUBE * unit.nanometer,
+    )
+
+    return topology
+
+
 def gas_simulation(smiles, box_size: float = DEFAULT_BOX_SIZE_GAS):
     mol = Molecule.from_smiles(smiles, allow_undefined_stereo=True)
     topology = topology_gas(mol)
@@ -112,7 +125,43 @@ def mix_simulation(
     box2 = estimate_box_size(smiles2, n_mols=n_mols, target_density=target_density)
     box_size = box1 * ratio + box2 * (1 - ratio)
 
-    topology = topology_binary(mol1, mol2, ratio=ratio, n_mols=n_mols, box_size=box_size)
+    topology = topology_binary(
+        mol1, mol2, ratio=ratio, n_mols=n_mols, box_size=box_size
+    )
+    ff = ForceField(DEFAULT_FF)
+    interchange: Interchange = Interchange.from_smirnoff(
+        force_field=ff, topology=topology
+    )
+    return topology, interchange
+
+
+def n_mix_simulation(
+    smiles_list: List[str],
+    ratio_list: List[float] = None,
+    n_mols: int = DEFAULT_NUM_MOLS,
+    target_density: float = DEFAULT_DENSITY,
+):
+    n = len(smiles_list)
+
+    if ratio_list is None:
+        ratio_list = [1 / n for _ in range(n)]
+
+    ratio_sum = sum(ratio_list)
+    ratio_list = [x / ratio_sum for x in ratio_list]
+
+    mol_list = [
+        Molecule.from_smiles(smi, allow_undefined_stereo=True) for smi in smiles_list
+    ]
+
+    # estimates the size of the box given the target density
+    box_size = sum([
+        x * estimate_box_size(smi, n_mols=n_mols, target_density=target_density)
+        for x, smi in zip(ratio_list, smiles_list)
+    ])
+
+    topology = topology_n_mols(
+        mol_list, ratio_list=ratio_list, n_mols=n_mols, box_size=box_size
+    )
     ff = ForceField(DEFAULT_FF)
     interchange: Interchange = Interchange.from_smirnoff(
         force_field=ff, topology=topology
