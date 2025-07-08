@@ -51,6 +51,11 @@ def get_default_platform_props(platform: str) -> dict:
         if devices is None:
             return {}
 
+        if "," in devices:
+            return {
+                "DeviceIndex": devices,
+            }
+
         return {
-            "DeviceIndex": devices,
+            "DeviceIndex": int(devices),
         }

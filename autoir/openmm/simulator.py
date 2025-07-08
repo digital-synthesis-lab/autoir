@@ -1,5 +1,5 @@
-import os
 import logging
+import os
 
 from openff.interchange import Interchange
 
@@ -8,7 +8,12 @@ from openmm import unit
 from openmm.openmm import Platform
 
 from .reporters import AverageEnergyReporter, DipoleReporter, FastDataReporter
-from .utils import deactivate_barostat, deactivate_data_reporters, resize_box, get_default_platform_props
+from .utils import (
+    deactivate_barostat,
+    deactivate_data_reporters,
+    get_default_platform_props,
+    resize_box,
+)
 
 DEFAULT_PROD_FILE = "prod.csv"
 DEFAULT_EQUI_FILE = "equi.csv"
@@ -83,9 +88,13 @@ class OpenMMSimulator:
         if self.platform is None:
             simulation = interchange.to_openmm_simulation(self.get_integrator())
         elif type(self.platform) != str:
-            raise ValueError(f"Argument platform {platform} is not string")
+            raise ValueError(f"Argument platform {self.platform} is not string")
         else:
-            simulation = interchange.to_openmm_simulation(self.get_integrator(), platformProperties=self.platform_props, platform=Platform.getPlatformByName(self.platform))
+            simulation = interchange.to_openmm_simulation(
+                self.get_integrator(),
+                platformProperties=self.platform_props,
+                platform=Platform.getPlatformByName(self.platform),
+            )
 
         if barostat:
             simulation.system.addForce(self.get_barostat())
