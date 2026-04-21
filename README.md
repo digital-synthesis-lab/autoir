@@ -1,15 +1,233 @@
-# autoir
+# AutoIR: Automated Infrared Spectra from Molecular Dynamics
 
-The `autoir` package is designed to facilitate the analysis and simulation of infrared spectra using molecular dynamics simulations. It provides tools for setting up simulations, rendering input files, and analyzing the results to compute infrared spectra.
+AutoIR is a Python package for computing infrared (IR) spectra from molecular dynamics (MD) simulations. Starting from a SMILES string, it automates the entire workflow:
 
-## Modules
+1. **System setup**: generates molecular topologies and simulation boxes for gas phase, pure liquids, and multi-component mixtures using the OpenFF toolkit.
+2. **MD simulation**: runs NVT/NPT molecular dynamics with OpenMM, recording dipole moments along the trajectory.
+3. **Spectral analysis**: computes the IR spectrum via the dipole autocorrelation function and its Fourier transform, including correction factors.
 
-- **analyze.py**: Contains functions to compute autocorrelation functions and spectra from simulation data.
-- **const.py**: Defines physical constants used throughout the package.
-- **create.py**: Provides functions to set up molecular simulations, including estimating box sizes and generating topologies for gas and liquid phases.
-- **render.py**: Handles the rendering of LAMMPS input files using Jinja2 templates.
-- **lammps/template.in**: A template file for LAMMPS simulations, which is populated with job-specific parameters.
+## Installation
 
-## CLI
+### From repository
 
-The `autoir.cli` module contains scripts to implement a command line interface for the `autoir` package, allowing users to interact with the package's functionality from the terminal.
+Clone the repository and install with `pip`:
+
+```bash
+git clone https://github.com/digital-synthesis-lab/autoir.git
+cd autoir
+pip install .
+```
+
+## Usage
+
+### Command line
+
+Once installed, the `autoir` command provides subcommands for different simulation types.
+
+#### Gas phase
+
+Run a gas-phase simulation for a single molecule given as a SMILES string:
+
+```bash
+autoir gas "CCO"
+```
+
+Common options:
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `-o`, `--output` | auto UUID | Output directory |
+| `--temperature` | 300 | Temperature (K) |
+| `--time_step` | 2 | Timestep (fs) |
+| `--nvt_equi_steps` | 100,000 | Equilibration steps |
+| `--nvt_prod_steps` | 300,000 | Production steps |
+| `--trj_freq` | 10,000 | Trajectory dump frequency (steps) |
+| `--platform` | auto | OpenMM platform (e.g. `CUDA`, `CPU`) |
+| `--seed` | 12345 | Random seed |
+
+#### Liquid phase
+
+Run an NPT + NVT simulation of a pure liquid:
+
+```bash
+autoir liquid "CCO" -n 80 --temperature 300 --pressure 1.0
+```
+
+Additional options beyond the gas phase:
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `-n`, `--n_mols` | 80 | Number of molecules in the box |
+| `--pressure` | 1.0 | Pressure (atm) |
+| `--target_density` | 0.5 | Initial packing density (g/cm³) |
+| `--npt_equi_steps` | 500,000 | NPT equilibration steps |
+| `--nvt_equi_steps` | 100,000 | NVT equilibration steps |
+| `--nvt_prod_steps` | 500,000 | NVT production steps |
+
+#### Binary mixture
+
+Simulate a liquid mixture of two components given their SMILES strings and a molar ratio:
+
+```bash
+autoir mixture "CCO" "O" --ratio 0.3 -n 100
+```
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `--ratio` | 0.5 | Molar fraction of the first component |
+
+All other options from the `liquid` command are also available.
+
+#### N-component mixture
+
+For mixtures with more than two components, use `n_mixture`:
+
+```bash
+autoir n_mixture -s "CCO" -s "O" -s "CC" -r "0.5 0.3 0.2"
+```
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `-s`, `--smiles` | — | SMILES string (repeat for each component) |
+| `-r`, `--ratio` | uniform | Molar ratios (repeat or space-separated; normalized automatically) |
+
+All other liquid-phase options apply.
+
+#### Analyzing simulation output
+
+After a simulation, compute the IR spectrum from the recorded dipole moment file:
+
+```bash
+autoir analyze -i dipoles.csv -o ir.csv
+```
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `-i`, `--input` | `dipoles.csv` | Dipole moment time series from the MD run |
+| `-o`, `--output` | `ir.csv` | Output IR spectrum file |
+| `-t`, `--truncate_autocorr` | 5000 | Number of steps used for the autocorrelation function |
+
+#### Getting help
+
+```bash
+autoir --help
+autoir gas --help
+autoir liquid --help
+autoir mixture --help
+autoir n_mixture --help
+autoir analyze --help
+```
+
+### Output files
+
+Each simulation creates a directory (specified with `-o`, or a random UUID by default) containing:
+
+| File | Description |
+|------|-------------|
+| `dipoles.csv` | Dipole moment (x, y, z) recorded every `trj_freq` steps |
+| `equi.csv` | Thermodynamic data during equilibration |
+| `prod.csv` | Thermodynamic data during production |
+| `avgE.csv` | Running-average potential energy |
+| `trajectory.pdb` | Atomic trajectory |
+| `ir.csv` | Computed IR spectrum (wavenumber vs. intensity) |
+| `job.json` | Simulation parameters and summary metrics |
+
+### API
+
+#### Gas phase simulation
+
+```python
+from autoir.create import gas_simulation
+from autoir.openmm.simulator import OpenMMSimulator
+from autoir.analyze import process_file, smooth_ir
+
+topology, interchange = gas_simulation("CCO")
+
+sim = OpenMMSimulator(temperature=300, pressure=0.0, nvt_prod_steps=300_000)
+sim.run(interchange, npt_equi_steps=0, nvt_equi_steps=100_000, nvt_prod_steps=300_000)
+
+df = process_file("dipoles.csv", out_file="ir.csv")
+wn, ir = smooth_ir(df)
+```
+
+#### Liquid phase simulation
+
+```python
+from autoir.create import liq_simulation
+from autoir.openmm.simulator import OpenMMSimulator
+from autoir.analyze import process_file, smooth_ir
+
+topology, interchange = liq_simulation("CCO", n_mols=80, target_density=0.5)
+
+sim = OpenMMSimulator(temperature=300, pressure=1.0)
+sim.run(interchange, npt_equi_steps=500_000, nvt_equi_steps=100_000, nvt_prod_steps=500_000)
+
+df = process_file("dipoles.csv", out_file="ir.csv")
+wn, ir = smooth_ir(df)
+```
+
+#### Binary mixture simulation
+
+```python
+from autoir.create import mix_simulation
+from autoir.openmm.simulator import OpenMMSimulator
+from autoir.analyze import process_file
+
+topology, interchange = mix_simulation("CCO", "O", ratio=0.3, n_mols=100)
+
+sim = OpenMMSimulator(temperature=300, pressure=1.0)
+sim.run(interchange, npt_equi_steps=500_000, nvt_equi_steps=100_000, nvt_prod_steps=500_000)
+
+df = process_file("dipoles.csv", out_file="ir.csv")
+```
+
+#### N-component mixture simulation
+
+```python
+from autoir.create import n_mix_simulation
+from autoir.openmm.simulator import OpenMMSimulator
+from autoir.analyze import process_file
+
+smiles = ["CCO", "O", "CC"]
+ratios = [0.5, 0.3, 0.2]
+
+topology, interchange = n_mix_simulation(smiles, ratio_list=ratios, n_mols=100)
+
+sim = OpenMMSimulator(temperature=300, pressure=1.0)
+sim.run(interchange, npt_equi_steps=500_000, nvt_equi_steps=100_000, nvt_prod_steps=500_000)
+
+df = process_file("dipoles.csv", out_file="ir.csv")
+```
+
+#### Computing the IR spectrum from a dipole file
+
+```python
+from autoir.analyze import compute_autocorr, compute_spectra, smooth_ir
+import pandas as pd
+
+autocorr, timestep = compute_autocorr("dipoles.csv", truncate_autocorr=5000)
+wavenums, spectra = compute_spectra(autocorr, timestep, T=300)
+
+wn, ir = smooth_ir(pd.DataFrame({"w": wavenums, "IR": spectra}))
+```
+
+## Citing
+
+If you use AutoIR in a publication, please cite the following paper:
+
+```bibtex
+@article{melle2026irid,
+  title={Automatic Identification of Compounds in Molecular Mixtures from Liquid-Phase Infrared Spectra},
+  author={Melle, Yannah J.U. and Nguyen, Thanh and Lopez, Jeffrey and Schwalbe-Koda, Daniel},
+  journal={arXiv:2602.21308},
+  year={2026},
+  doi = {10.48550/arXiv.2602.21308},
+  url = {https://arxiv.org/abs/2602.21308},
+}
+```
+
+## License
+
+AutoIR is distributed under the BSD-3-Clause license.
+
+SPDX: BSD-3-Clause
