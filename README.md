@@ -107,6 +107,28 @@ autoir analyze -i dipoles.csv -o ir.csv
 | `-o`, `--output` | `ir.csv` | Output IR spectrum file |
 | `-t`, `--truncate_autocorr` | 5000 | Number of steps used for the autocorrelation function |
 
+#### Single-point energy
+
+Compute the potential energy for a single frame of a PDB file (for example, a
+structure produced by a prior simulation). One SMILES string must be supplied
+for each unique molecule present in the PDB, since OpenFF cannot infer
+bond orders from PDB coordinates alone:
+
+```bash
+autoir singlepoint trajectory.pdb -s "CCO" --frame 0
+```
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `-s`, `--smiles` | — | SMILES for each unique molecule in the PDB (repeatable) |
+| `--frame` | 0 | Zero-based MODEL index to evaluate |
+| `--force_field` | `openff_unconstrained-2.0.0.offxml` | SMIRNOFF force-field filename |
+| `--platform` | auto | OpenMM platform (e.g. `CUDA`, `CPU`) |
+
+The command prints the potential energy in kJ/mol to stdout. The periodic box
+is taken from the PDB `CRYST1` record when present; otherwise a 4 nm cubic
+non-periodic box is used (matching the gas-phase workflow).
+
 #### Getting help
 
 ```bash
@@ -116,6 +138,7 @@ autoir liquid --help
 autoir mixture --help
 autoir n_mixture --help
 autoir analyze --help
+autoir singlepoint --help
 ```
 
 ### Output files
@@ -209,6 +232,18 @@ autocorr, timestep = compute_autocorr("dipoles.csv", truncate_autocorr=5000)
 wavenums, spectra = compute_spectra(autocorr, timestep, T=300)
 
 wn, ir = smooth_ir(pd.DataFrame({"w": wavenums, "IR": spectra}))
+```
+
+#### Single-point energy from a PDB frame
+
+```python
+from autoir.singlepoint import single_point_energy
+
+energy_kj_per_mol = single_point_energy(
+    pdb_file="trajectory.pdb",
+    smiles=["CCO"],   # one SMILES per unique molecule in the PDB
+    frame=0,
+)
 ```
 
 ## Citing

@@ -5,6 +5,7 @@ from autoir.cli.liquid import liquid_sim
 from autoir.cli.mixture import mixture_sim
 from autoir.cli.n_mixture import n_mixture_sim
 from autoir.cli.analyze import analyze_file
+from autoir.cli.singlepoint import singlepoint_cmd
 
 
 class AutoIRGroup(click.Group):
@@ -21,3 +22,4 @@ autoir.add_command(liquid_sim)
 autoir.add_command(mixture_sim)
 autoir.add_command(n_mixture_sim)
 autoir.add_command(analyze_file)
+autoir.add_command(singlepoint_cmd)
