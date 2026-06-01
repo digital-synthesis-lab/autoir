@@ -252,12 +252,13 @@ If you use AutoIR in a publication, please cite the following paper:
 
 ```bibtex
 @article{melle2026irid,
-  title={Automatic Identification of Compounds in Molecular Mixtures from Liquid-Phase Infrared Spectra},
-  author={Melle, Yannah J.U. and Nguyen, Thanh and Lopez, Jeffrey and Schwalbe-Koda, Daniel},
-  journal={arXiv:2602.21308},
-  year={2026},
-  doi = {10.48550/arXiv.2602.21308},
-  url = {https://arxiv.org/abs/2602.21308},
+  author = {Melle, Yannah J. U. and Nguyen, Thanh and Lopez, Jeffrey and Schwalbe-Koda, Daniel},
+  title = {Automatic identification of compounds in molecular mixtures from liquid-phase infrared spectra},
+  journal = {Chem. Sci.},
+  year = {2026},
+  publisher = {The Royal Society of Chemistry},
+  doi = {10.1039/D6SC01583B},
+  url = {http://dx.doi.org/10.1039/D6SC01583B},
 }
 ```
 
