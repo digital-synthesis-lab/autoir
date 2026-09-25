@@ -252,7 +252,7 @@ AutoIR parameterizes molecules with the OpenFF Toolkit, which chooses the partia
 charge method based on what is installed in your environment. If the OpenEye
 Toolkits are installed and a valid license is found, OpenFF assigns AM1BCC-ELF10
 charges, averaged over a set of selected conformers. If OpenEye is not available,
-OpenFF falls back to single-conformer AM1BCC charges from AmberTools without any
+OpenFF falls back to single-conformer AM1BCC charges from AmberTools with a
 warning.
 
 To use the OpenEye Toolkits set the `OE_LICENSE`
