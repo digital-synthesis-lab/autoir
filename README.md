@@ -260,7 +260,7 @@ environment variable to the path of your license file. Academic licenses are
 available from [OpenEye](https://www.eyesopen.com/academic-licensing). 
 
 
-If you use OpenEye with AutoIR, please also cite
+If you use OpenEye with AutoIR, please also cite:
 
 OpenEye Toolkits <VERSION>. OpenEye, Cadence Molecular Sciences, Santa Fe, NM.
 http://www.eyesopen.com.
