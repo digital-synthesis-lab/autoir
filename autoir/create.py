@@ -8,6 +8,10 @@ from rdkit.Chem import Descriptors
 
 from . import const
 
+from openff.toolkit.utils.toolkits import OpenEyeToolkitWrapper
+
+OPENEYE_AVAILABLE = OpenEyeToolkitWrapper.is_available()
+
 DEFAULT_FF = "openff_unconstrained-2.0.0.offxml"
 DEFAULT_BOX_SIZE_GAS = 4.0  # nm for gas phase
 DEFAULT_DENSITY = 0.5  # g/cm3

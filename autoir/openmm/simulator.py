@@ -14,6 +14,8 @@ from .utils import (
     get_default_platform_props,
     resize_box,
 )
+from autoir.create import OPENEYE_AVAILABLE
+
 
 DEFAULT_PROD_FILE = "prod.csv"
 DEFAULT_EQUI_FILE = "equi.csv"
@@ -131,6 +133,12 @@ class OpenMMSimulator:
         nvt_prod_steps=1_000_000,
         npt_equi_volume_steps=1000,
     ):
+        if not OPENEYE_AVAILABLE:
+            self.logger.warning(
+                "OpenEye unavailable — using AmberTools AM1-BCC "
+                "(single conformer) instead of AM1-BCC ELF10"
+            )
+
         self.logger.info("Creating simulation")
         has_npt = npt_equi_steps > 0
         simulation = self.create_simulation(interchange, barostat=has_npt)
