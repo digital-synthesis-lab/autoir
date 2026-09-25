@@ -246,6 +246,26 @@ energy_kj_per_mol = single_point_energy(
 )
 ```
 
+## Partial charges and OpenEye
+
+AutoIR parameterizes molecules with the OpenFF Toolkit, which chooses the partial
+charge method based on what is installed in your environment. If the OpenEye
+Toolkits are installed and a valid license is found, OpenFF assigns AM1BCC-ELF10
+charges, averaged over a set of selected conformers. If OpenEye is not available,
+OpenFF falls back to single-conformer AM1BCC charges from AmberTools without any
+warning.
+
+To use the OpenEye Toolkits set the `OE_LICENSE`
+environment variable to the path of your license file. Academic licenses are
+available from [OpenEye](https://www.eyesopen.com/academic-licensing). 
+
+
+If you use OpenEye with AutoIR, please also cite
+
+OpenEye Toolkits <VERSION>. OpenEye, Cadence Molecular Sciences, Santa Fe, NM.
+http://www.eyesopen.com.
+
+
 ## Citing
 
 If you use AutoIR in a publication, please cite the following paper:
@@ -267,3 +287,6 @@ If you use AutoIR in a publication, please cite the following paper:
 AutoIR is distributed under the BSD-3-Clause license.
 
 SPDX: BSD-3-Clause
+
+
+
